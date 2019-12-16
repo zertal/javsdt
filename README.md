@@ -12,7 +12,7 @@ python3.7  使用pyinstaller打包成exe。
 
 [下载emby和kodi女优头像](https://github-production-release-asset-2e65be.s3.amazonaws.com/199952692/40b54680-12f9-11ea-94e9-4e37ce4bec6e?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20191203%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20191203T172215Z&X-Amz-Expires=300&X-Amz-Signature=5ecbd9367a7a1135692406957163464a7cfcc9bbd563151bcdc686cceed71aad&X-Amz-SignedHeaders=host&actor_id=44168897&response-content-disposition=attachment%3B%20filename%3Dactors.zip&response-content-type=application%2Foctet-stream)  
   [下载jellyfin女优头像](https://github-production-release-asset-2e65be.s3.amazonaws.com/199952692/abfe6180-15f4-11ea-9c0b-cf86d9dc383b?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20191203%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20191203T100311Z&X-Amz-Expires=300&X-Amz-Signature=f13c8e4bd8942884aefe015f369938186147544dfae227fdb07744c64754b655&X-Amz-SignedHeaders=host&actor_id=44168897&response-content-disposition=attachment%3B%20filename%3DPeople.zip&response-content-type=application%2Foctet-stream)  
-如果头像链接失效，请进入[“release”]找到之前发布的压缩包(https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases)下载。  
+如果头像链接失效，请进入[“release”](https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases)找到之前发布的压缩包下载。  
 
 [电报群](https://t.me/javsdtool)  
 <a target="_blank" href="//shang.qq.com/wpa/qunwpa?idkey=79a735ccf11ed7f15481ae02f6a58f16315b8b424149455b4dc65868362f4b30">企鹅群</a>  
