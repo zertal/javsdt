@@ -45,9 +45,12 @@ def tran(api_id, key, word, to_lang):
     }
     response = requests.get('http://api.fanyi.baidu.com/api/trans/vip/translate', params=paramas, timeout=10).content
     content = str(response, encoding="utf-8")
-    json_reads = json.loads(content)
     try:
+        json_reads = json.loads(content)
         return json_reads['trans_result'][0]['dst']
+    except json.decoder.JSONDecodeError:
+        print('    >翻译简介失败，请截图给作者，检查是否有非法字符：', word)
+        return '无法翻译该标题作简介，请自行翻译。'
     except:
         print('    >正在尝试重新日译中...')
         return tran(api_id, key, word, to_lang)
@@ -64,15 +67,15 @@ def get_jav_html(url_list):
 # 下载图片，无返回
 def download_pic(cov_list):
     # 0错误次数  1图片url  2图片路径  3proxies
-    if cov_list[0] < 3:
+    if cov_list[0] < 5:
         try:
             if len(cov_list) == 3:
-                r = requests.get(cov_list[1], stream=True, timeout=10)
+                r = requests.get(cov_list[1], stream=True, timeout=(3, 7))
                 with open(cov_list[2], 'wb') as pic:
                     for chunk in r:
                         pic.write(chunk)
             else:
-                r = requests.get(cov_list[1], proxies=cov_list[3], stream=True, timeout=10)
+                r = requests.get(cov_list[1], proxies=cov_list[3], stream=True, timeout=(3, 7))
                 with open(cov_list[2], 'wb') as pic:
                     for chunk in r:
                         pic.write(chunk)
@@ -96,21 +99,20 @@ class JavFile(object):
         self.name = 'ABC-123.mp4'  # 文件名
         self.car = 'ABC-123'  # 车牌
         self.episodes = 0     # 第几集
+        self.subt = ''        # 字幕文件名  ABC-123.srt
 
 
 # 读取配置文件
 print('1、请开启代理，建议美国节点，访问“https://www.jav321.com/”\n'
       '2、影片信息没有导演，没有演员头像，可能没有演员姓名\n'
       '3、如有素人车牌识别不出，请在ini中添加该车牌\n')
-config_settings = configparser.ConfigParser()
 print('正在读取ini中的设置...', end='')
-
 try:
+    config_settings = configparser.ConfigParser()
     config_settings.read('ini的设置会影响所有exe的操作结果.ini', encoding='utf-8-sig')
     if_nfo = config_settings.get("收集nfo", "是否收集nfo？")
     if_exnfo = config_settings.get("收集nfo", "是否跳过已存在nfo的文件夹？")
     custom_title = config_settings.get("收集nfo", "nfo中title的格式")
-    custom_subtitle = config_settings.get("收集nfo", "是否中字的表现形式")
     if_jpg = config_settings.get("下载封面", "是否下载封面海报？")
     custom_fanart = config_settings.get("下载封面", "DVD封面的格式")
     custom_poster = config_settings.get("下载封面", "海报的格式")
@@ -119,6 +121,7 @@ try:
     if_folder = config_settings.get("修改文件夹", "是否重命名或创建独立文件夹？")
     rename_folder = config_settings.get("修改文件夹", "新文件夹的格式")
     if_classify = config_settings.get("归类影片", "是否归类影片？")
+    file_folder = config_settings.get("归类影片", "针对文件还是文件夹？")
     classify_root = config_settings.get("归类影片", "归类的根目录")
     classify_basis = config_settings.get("归类影片", "归类的标准")
     if_proxy = config_settings.get("代理", "是否使用代理？")
@@ -130,12 +133,24 @@ try:
     suren_pref = config_settings.get("其他设置", "素人车牌(若有新车牌请自行添加)")
     file_type = config_settings.get("其他设置", "扫描文件类型")
     title_len = int(config_settings.get("其他设置", "重命名中的标题长度（50~150）"))
+    subt_words = config_settings.get("原影片文件的性质", "是否中字即文件名包含")
+    custom_subt = config_settings.get("原影片文件的性质", "是否中字的表现形式")
+    xx_words = config_settings.get("原影片文件的性质", "是否xx即文件名包含")
+    custom_xx = config_settings.get("原影片文件的性质", "是否xx的表现形式")
+    movie_type = config_settings.get("原影片文件的性质", "素人")
 except:
     print(traceback.format_exc())
     print('\n无法读取ini文件，请修改它为正确格式，或者打开“【ini】重新创建ini.exe”创建全新的ini！')
     os.system('pause')
 print('\n读取ini文件成功! ')
 
+# 归类文件夹具有最高决定权
+if if_classify == '是':            # 如果需要归类
+    if file_folder == '文件夹':    # 并且是针对文件夹
+        if_folder = '是'           # 那么必须重命名文件夹或者创建新的文件夹
+    else:
+        if_folder = '否'           # 否则不会操作新文件夹
+# 简繁
 if simp_trad == '简':  # https://tw.jav321.com/video/ssni00643
     url = 'https://www.jav321.com/search'
     t_lang = 'zh'          # 百度翻译，日译简中
@@ -154,15 +169,18 @@ else:
 nfo_dict = {'空格': ' ', '车牌': 'ABC-123', '标题': '未知标题', '完整标题': '完整标题',
             '发行年月日': '1970-01-01', '发行年份': '1970', '月': '01', '日': '01',
             '片商': '未知片商', '评分': '0', '首个女优': '未知演员', '全部女优': '未知演员',
-            '片长': '0', '\\': '\\', '是否中字': '中字-', '视频': 'ABC-123'} # 用于暂时存放影片信息，女优，标题等
+            '片长': '0', '\\': '\\', '是否中字': custom_subt, '视频': 'ABC-123', '车牌前缀': 'ABC',
+            '是否xx': custom_xx, '影片类型': movie_type}  # 用于暂时存放影片信息，女优，标题等
 suren_list = suren_pref.split('、')
-rename_mp4_list = rename_mp4.split('+')    #重命名格式的列表，来自ini文件的rename_mp4
-rename_folder_list = rename_folder.split('+')    #重命名格式的列表，来自ini文件的rename_floder
-type_tuple = tuple(file_type.split('、'))   #重命名格式的列表，来自ini文件的rename_mp4
-classify_basis_list = classify_basis.split('\\')  # 归类标准，来自ini文件的file_type
-title_list = custom_title.replace('标题', '完整标题', 1).split('+')  # 归类标准，来自ini文件的custom_title
-fanart_list = custom_fanart.split('+')  # 归类标准，来自ini文件的custom_title
-poster_list = custom_poster.split('+')  # 归类标准，来自ini文件的custom_title
+rename_mp4_list = rename_mp4.split('+')
+rename_folder_list = rename_folder.split('+')
+type_tuple = tuple(file_type.split('、'))
+classify_basis_list = classify_basis.split('\\')
+title_list = custom_title.replace('标题', '完整标题', 1).split('+')
+fanart_list = custom_fanart.split('+')
+poster_list = custom_poster.split('+')
+word_list = subt_words.split('、')
+xx_list = xx_words.split('、')
 for j in rename_mp4_list and rename_folder_list:
     if j not in nfo_dict:
         nfo_dict[j] = j
@@ -222,19 +240,28 @@ while start_key == '':
         if if_exnfo == '是' and files and (files[-1].endswith('nfo') or (len(files) > 1 and files[-2].endswith('nfo'))):
             continue
         # 对这一层文件夹进行评估,有多少视频，有多少同车牌视频，是不是独立文件夹
-        car_videos = []        # 存放：需要整理的jav的结构体
-        cars_dic = {}
+        jav_videos = []        # 存放：需要整理的jav的结构体
+        cars_dic = {}          # car 车牌
         videos_num = 0        # 当前文件夹中视频的数量，可能有视频不是jav
         subtitles = False      # 有没有字幕
-        nfo_dict['是否中字'] = ''
+        subts_dict = {}          # 存放：jav的字幕文件{'路径': '文件中的车牌'}
         for raw_file in files:
             # 判断文件是不是字幕文件
             if raw_file.endswith(('.srt', '.vtt', '.ass',)):
-                subtitles = True
+                srt_g = re.search(r'([a-zA-Z]{2,7})-? ?_?(\d{2,5})', raw_file)  # 这个正则表达式匹配“车牌号”可能有点奇怪，
+                if str(srt_g) != 'None':  # 如果你下过上千部片，各种参差不齐的命名，你就会理解我了。
+                    num_pref = srt_g.group(1).upper()
+                    if num_pref in suren_list:
+                        num_suf = srt_g.group(2)
+                        car_num = num_pref + '-' + num_suf
+                        subts_dict[raw_file] = car_num
                 continue
+        # print(subts_dict)
+        # print('>>扫描字幕文件完毕！')
+        for raw_file in files:
             # 判断是不是视频，得到车牌号
             if raw_file.endswith(type_tuple) and not raw_file.startswith('.'):
-                video_num_g = re.search(r'([a-zA-Z]{2,6})-? ?(\d{2,5})', raw_file)
+                video_num_g = re.search(r'([a-zA-Z]{2,7})-? ?_?(\d{2,5})', raw_file)
                 if str(video_num_g) != 'None':
                     num_pref = video_num_g.group(1)
                     num_pref = num_pref.upper()
@@ -249,7 +276,10 @@ while start_key == '':
                         jav_file.car = car_num
                         jav_file.name = raw_file
                         jav_file.episodes = cars_dic[car_num]
-                        car_videos.append(jav_file)
+                        if car_num in subts_dict.values():
+                            jav_file.subt = list(subts_dict.keys())[list(subts_dict.values()).index(car_num)]
+                            del subts_dict[jav_file.subt]
+                        jav_videos.append(jav_file)
                     else:
                         continue
                 else:
@@ -257,7 +287,7 @@ while start_key == '':
             else:
                 continue
         if cars_dic:
-            if len(cars_dic) > 1 or videos_num > len(car_videos) or len(dirs) > 1 or (
+            if len(cars_dic) > 1 or videos_num > len(jav_videos) or len(dirs) > 1 or (
                     len(dirs) == 1 and dirs[0] != '.actors'):
                 # 当前文件夹下， 车牌不止一个，还有其他非jav视频，有其他文件夹
                 separate_folder = False
@@ -267,10 +297,9 @@ while start_key == '':
             continue
 
         # 正式开始
-        for srt in car_videos:
+        for srt in jav_videos:
             car_num = srt.car
             file = srt.name
-            video_type = '.' + file.split('.')[-1]                  # 文件类型，如：.mp4
             relative_path = '\\' + root.lstrip(path) + '\\' + file  # 影片的相对于所选文件夹的路径，用于报错
             try:
                 # 获取nfo信息的jav321搜索网页
@@ -304,6 +333,28 @@ while start_key == '':
                     write_fail('    >' + fail_message)
                     continue
 
+                # 影片的一些属性
+                video_type = '.' + file.split('.')[-1]  # 文件类型，如：.mp4
+                subt_name = srt.subt
+                if subt_name:
+                    subtitles = True
+                    subt_type = '.' + subt_name.split('.')[-1]  # 文件类型，如：.srt
+                else:
+                    subtitles = False
+                    subt_type = ''
+                nfo_dict['是否中字'] = ''
+                if not subtitles:  # 没有外挂字幕
+                    for i in word_list:
+                        if i in file:
+                            nfo_dict['是否中字'] = custom_subt
+                            break
+                else:
+                    nfo_dict['是否中字'] = custom_subt
+                nfo_dict['是否xx'] = ''
+                for i in xx_list:
+                    if i in file:
+                        nfo_dict['是否xx'] = custom_xx
+                        break
                 # 正则匹配 影片信息 开始
                 # 车牌号
                 nfo_dict['车牌'] = re.search(r'番.</b>: (.+?)<br>', jav_html).group(1).upper()
@@ -313,7 +364,7 @@ while start_key == '':
                     .replace('/', '#').replace(':', '：').replace('*', '#').replace('?', '？') \
                     .replace('"', '#').replace('<', '【').replace('>', '】') \
                     .replace('|', '#').replace('＜', '【').replace('＞', '】') \
-                    .replace('〈', '【').replace('〉', '】').replace('.', '。').replace('＆', '和')
+                    .replace('〈', '【').replace('〉', '】').replace('＆', '和').replace('\t', '').replace('\r', '')
                 # 素人的title开头不是车牌
                 title = nfo_dict['车牌'] + ' ' + only_title
                 print('>>正在处理：', title)
@@ -368,10 +419,10 @@ while start_key == '':
                 # 特点
                 genres = re.findall(r'genre.+?">(.+?)</a>', jav_html)
                 genres = [i for i in genres if i != '标签' and i != '標籤']
-                genres.append('片商：' + nfo_dict['片商'])
-                if '-c.' in file or '-C.' in file or subtitles:
+                if nfo_dict['是否中字']:
                     genres.append('中文字幕')
-                    nfo_dict['是否中字'] = custom_subtitle
+                if nfo_dict['是否xx']:
+                    genres.append('无码流出')
                 # 下载封面 cover fanart
                 coverg = re.search(r'poster="(.+?)"><source', jav_html)  # 封面图片的正则对象
                 if str(coverg) != 'None':
@@ -439,16 +490,52 @@ while start_key == '':
                     os.rename(root + '\\' + file, root + '\\' + new_mp4 + video_type)
                     file = new_mp4 + video_type
                     print('    >修改文件名' + cd_msg + '完成')
+                    # 重命名字幕
+                    if subt_name:
+                        os.rename(root + '\\' + subt_name, root + '\\' + new_mp4 + subt_type)
+                        subt_name = new_mp4 + subt_type
+                        print('    >修改字幕名完成')
+
+                # nfo_dict['视频']用于图片的命名
+                nfo_dict['视频'] = new_mp4
+
+                # 1.5 归类影片，只针对影片
+                if if_classify == '是' and file_folder != '文件夹':
+                    # 需要归类影片，针对这个影片
+                    class_root = classify_root + '\\'
+                    # 移动的目标文件夹
+                    for j in classify_list:
+                        class_root += nfo_dict[j].rstrip(' .')      # C:\\Users\\JuneRain\\Desktop\\测试文件夹\\1\\葵司\\
+                    new_root = class_root              # 新的影片的目录路径，C:\\Users\\JuneRain\\Desktop\\测试文件夹\\1\\葵司\\
+                    new_folder = new_root.split('\\')[-1]  # 新的影片的目录名称，变成了目标目录“葵司”
+                    if not os.path.exists(new_root):   # 不存在目标文件夹
+                        os.makedirs(new_root)
+                    jav_new_path = new_root + '\\' + file   # 新的影片路径
+                    if not os.path.exists(jav_new_path):    # 目标文件夹没有相同的影片
+                        os.rename(root + '\\' + file, jav_new_path)
+                        print('    >归类影片文件完成')
+                        if subt_name:
+                            os.rename(root + '\\' + subt_name, new_root + '\\' + subt_name)
+                            print('    >归类字幕文件完成')
+                    else:
+                        fail_times += 1
+                        fail_message = '    >第' + str(
+                            fail_times) + '个失败！归类失败，重复的影片，归类的目标文件夹已经存在相同的影片：' + jav_new_path + '\n'
+                        print(fail_message, end='')
+                        fail_list.append(fail_message)
+                        write_fail(fail_message)
+                        continue
+                else:
+                    new_root = root  # 当前影片的目录路径，在下面的重命名操作中将发生变化
+                    new_folder = root.split('\\')[-1]  # 当前影片的目录名称，在下面的重命名操作中即将发生变化
 
                 # 2重命名文件夹
-                new_root = root
-                new_folder = root.split('\\')[-1]    # 当前影片的新目录名称
                 if if_folder == '是':
                     # 新文件夹名rename_folder
                     new_folder = ''
                     for j in rename_folder_list:
                         new_folder += (nfo_dict[j])
-                    new_folder = new_folder.rstrip(' ')
+                    new_folder = new_folder.rstrip(' .')
                     if separate_folder:
                         if cars_dic[car_num] == 1 or (
                                 cars_dic[car_num] > 1 and cars_dic[car_num] == srt.episodes):  # 同一车牌有多部，且这是最后一部，才会重命名
@@ -466,9 +553,13 @@ while start_key == '':
                         os.rename(root + '\\' + file, root + '\\' + new_folder + '\\' + file)  # 就把影片放进去
                         new_root = root + '\\' + new_folder  # 在当前文件夹下再创建新文件夹
                         print('    >创建独立的文件夹完成')
+                        if subt_name:
+                            os.rename(root + '\\' + subt_name, root + '\\' + new_folder + '\\' + subt_name)  # 就把字幕放进去
+                            print('    >移动字幕到独立文件夹')
 
                 # 更新一下relative_path
                 relative_path = '\\' + new_root.lstrip(path) + '\\' + file  # 影片的相对于所选文件夹的路径，用于报错
+
                 # 3写入nfo
                 if if_nfo:
                     cus_title = ''
@@ -497,15 +588,15 @@ while start_key == '':
                             "  <num>" + nfo_dict['车牌'] + "</num>\n")
                     for i in genres:
                         f.write("  <genre>" + i + "</genre>\n")
+                    f.write("  <genre>片商：" + nfo_dict['片商'] + "</genre>\n")
                     for i in genres:
                         f.write("  <tag>" + i + "</tag>\n")
+                    f.write("  <tag>片商：" + nfo_dict['片商'] + "</tag>\n")
                     f.write("  <actor>\n    <name>" + nfo_dict['首个女优'] + "</name>\n    <type>Actor</type>\n  </actor>\n")
                     f.write("</movie>\n")
                     f.close()
                     print("    >nfo收集完成")
 
-                # nfo_dict['视频']用于图片的命名
-                nfo_dict['视频'] = new_mp4
                 # 4需要两张图片
                 if if_jpg == '是':
                     # fanart和poster路径
@@ -551,8 +642,8 @@ while start_key == '':
 
                 # 5收集女优头像
 
-                # 6移动文件夹
-                if if_classify == '是' and (
+                # 6归类影片，针对文件夹
+                if if_classify == '是' and file_folder == '文件夹' and (
                         cars_dic[car_num] == 1 or (cars_dic[car_num] > 1 and cars_dic[car_num] == srt.episodes)):
                     # 需要移动文件夹，且，是该影片的最后一集
                     if separate_folder and classify_root.startswith(root):
@@ -561,7 +652,7 @@ while start_key == '':
                     class_root = classify_root + '\\'
                     # 对归类标准再细化
                     for j in classify_list:
-                        class_root += nfo_dict[j]  # C:\\Users\\JuneRain\\Desktop\\测试文件夹\\1\\葵司\\
+                        class_root += nfo_dict[j].rstrip(' .')  # C:\\Users\\JuneRain\\Desktop\\测试文件夹\\1\\葵司\\
                     new_new_root = class_root + new_folder  # 移动的目标文件夹 C:\\Users\\JuneRain\\Desktop\\测试文件夹\\1\\葵司\\【葵司】AVOP-127
                     if not os.path.exists(new_new_root):    # 不存在目标目录
                         os.makedirs(new_new_root)
@@ -576,9 +667,6 @@ while start_key == '':
                         print(fail_message, end='')
                         fail_list.append(fail_message)
                         write_fail(fail_message)
-                        if not os.path.exists(path + '\\归类失败'):  # 还不存在失败文件夹，先创建一个
-                            os.makedirs(path + '\\归类失败')
-                        shutil.move(new_root, path + '\\归类失败\\' + new_root.split('\\')[-1])
                         continue
 
             except:
