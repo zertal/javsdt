@@ -32,8 +32,8 @@ def write_fail(fail_m):
 def image_cut(file_name, cli):
     with open(file_name, 'rb') as fp:
         image = fp.read()
-    result = cli.bodyAnalysis(image)
     try:
+        result = cli.bodyAnalysis(image)
         return int(result["person_info"][0]['body_parts']['nose']['x'])
     except:
         print('    >正在尝试重新人体检测...')
@@ -53,15 +53,15 @@ def get_jav_html(url_list):
 # 下载图片，无返回
 def download_pic(cov_list):
     # 0错误次数  1图片url  2图片路径  3proxies
-    if cov_list[0] < 3:
+    if cov_list[0] < 5:
         try:
             if len(cov_list) == 3:
-                r = requests.get(cov_list[1], stream=True, timeout=10)
+                r = requests.get(cov_list[1], stream=True, timeout=(3, 7))
                 with open(cov_list[2], 'wb') as pic:
                     for chunk in r:
                         pic.write(chunk)
             else:
-                r = requests.get(cov_list[1], proxies=cov_list[3], stream=True, timeout=10)
+                r = requests.get(cov_list[1], proxies=cov_list[3], stream=True, timeout=(3, 7))
                 with open(cov_list[2], 'wb') as pic:
                     for chunk in r:
                         pic.write(chunk)
@@ -85,10 +85,11 @@ class JavFile(object):
         self.name = 'ABC-123.mp4'  # 文件名
         self.car = 'ABC-123'  # 车牌
         self.episodes = 0     # 第几集
+        self.subt = ''        # 字幕文件名  ABC-123.srt
 
 
 #  main开始
-print('1、如果连不上javbus，请更正防屏蔽地址\n'
+print('1、如果连不上javbus，请更正防屏蔽地址，不要用“www.javbus.com”！\n'
       '2、无码影片没有简介\n'
       '3、找不到AV信息，请在javbus上确认，再修改本地视频文件名，如：\n'
       '   112314-742-carib-1080p.mp4 => 112314-742.mp4\n'
@@ -96,19 +97,19 @@ print('1、如果连不上javbus，请更正防屏蔽地址\n'
       '   Heyzo_0733_01.mp4 => Heyzo_0733啊.mp4\n'
       '   Heyzo_0733_02.mp4 => Heyzo_0733吧.mp4\n')
 # 读取配置文件，这个ini文件用来给用户设置重命名的格式和jav网址
-config_settings = configparser.RawConfigParser()
 print('正在读取ini中的设置...', end='')
 try:
+    config_settings = configparser.RawConfigParser()
     config_settings.read('ini的设置会影响所有exe的操作结果.ini', encoding='utf-8-sig')
     if_nfo = config_settings.get("收集nfo", "是否收集nfo？")
     if_exnfo = config_settings.get("收集nfo", "是否跳过已存在nfo的文件夹？")
     custom_title = config_settings.get("收集nfo", "nfo中title的格式")
-    custom_subtitle = config_settings.get("收集nfo", "是否中字的表现形式")
     if_mp4 = config_settings.get("重命名影片", "是否重命名影片？")
     rename_mp4 = config_settings.get("重命名影片", "重命名影片的格式")
-    if_floder = config_settings.get("修改文件夹", "是否重命名或创建独立文件夹？")
+    if_folder = config_settings.get("修改文件夹", "是否重命名或创建独立文件夹？")
     rename_folder = config_settings.get("修改文件夹", "新文件夹的格式")
     if_classify = config_settings.get("归类影片", "是否归类影片？")
+    file_folder = config_settings.get("归类影片", "针对文件还是文件夹？")
     classify_root = config_settings.get("归类影片", "归类的根目录")
     classify_basis = config_settings.get("归类影片", "归类的标准")
     if_jpg = config_settings.get("下载封面", "是否下载封面海报？")
@@ -126,6 +127,11 @@ try:
     suren_pref = config_settings.get("其他设置", "素人车牌(若有新车牌请自行添加)")
     file_type = config_settings.get("其他设置", "扫描文件类型")
     title_len = int(config_settings.get("其他设置", "重命名中的标题长度（50~150）"))
+    subt_words = config_settings.get("原影片文件的性质", "是否中字即文件名包含")
+    custom_subt = config_settings.get("原影片文件的性质", "是否中字的表现形式")
+    xx_words = config_settings.get("原影片文件的性质", "是否xx即文件名包含")
+    custom_xx = config_settings.get("原影片文件的性质", "是否xx的表现形式")
+    movie_type = config_settings.get("原影片文件的性质", "无码")
 except:
     print(traceback.format_exc())
     print('\n无法读取ini文件，请修改它为正确格式，或者打开“【ini】重新创建ini.exe”创建全新的ini！')
@@ -161,19 +167,28 @@ else:
 # https://www.buscdn.work/
 if not bus_url.endswith('/'):
     bus_url += '/'
+# 归类文件夹具有最高决定权
+if if_classify == '是':            # 如果需要归类
+    if file_folder == '文件夹':    # 并且是针对文件夹
+        if_folder = '是'           # 那么必须重命名文件夹或者创建新的文件夹
+    else:
+        if_folder = '否'           # 否则不会操作新文件夹
 # 初始化其他
 nfo_dict = {'空格': ' ', '车牌': 'ABC-123', '标题': '未知标题', '完整标题': '完整标题', '导演': '未知导演',
             '发行年月日': '1970-01-01', '发行年份': '1970', '月': '01', '日': '01',
             '片商': '未知片商', '首个女优': '未知演员', '全部女优': '未知演员',
-            '片长': '0', '\\': '\\', '是否中字': '中字-', '视频': 'ABC-123'}         # 用于暂时存放影片信息，女优，标题等
-suren_list = suren_pref.split('、')        # 素人番号的列表，来自ini文件的suren_pref
-rename_mp4_list = rename_mp4.split('+')    # 重命名视频的格式，来自ini文件的rename_mp4
-rename_folder_list = rename_folder.split('+')    # 重命名文件夹的格式，来自ini文件的rename_floder
-type_tuple = tuple(file_type.split('、'))   # 视频文件的类型，来自ini文件的file_type
-classify_basis_list = classify_basis.split('\\')  # 归类标准，来自ini文件的file_type
-title_list = custom_title.replace('标题', '完整标题', 1).split('+')  # 归类标准，来自ini文件的custom_title
-fanart_list = custom_fanart.split('+')  # 归类标准，来自ini文件的custom_title
-poster_list = custom_poster.split('+')  # 归类标准，来自ini文件的custom_title
+            '片长': '0', '\\': '\\', '是否中字': '', '视频': 'ABC-123', '车牌前缀': 'ABC',
+            '是否xx': '', '影片类型': movie_type}         # 用于暂时存放影片信息，女优，标题等
+suren_list = suren_pref.split('、')              # 素人番号的列表
+rename_mp4_list = rename_mp4.split('+')          # 重命名视频的格式
+rename_folder_list = rename_folder.split('+')    # 重命名文件夹的格式
+type_tuple = tuple(file_type.split('、'))        # 需要扫描的文件的类型
+classify_basis_list = classify_basis.split('\\')  # 归类标准，归类到哪个文件夹
+title_list = custom_title.replace('标题', '完整标题', 1).split('+')  # nfo中title的写法
+fanart_list = custom_fanart.split('+')  # fanart的格式
+poster_list = custom_poster.split('+')  # poster的格式
+word_list = subt_words.split('、')      # 包含哪些特殊含义的文字，判断是否中字
+xx_list = xx_words.split('、')          # 包含哪些特殊含义的文字，判断是否xx
 for j in rename_mp4_list:
     if j not in nfo_dict:
         nfo_dict[j] = j
@@ -196,70 +211,84 @@ for j in fanart_list:
 for j in poster_list:
     if j not in nfo_dict:
         nfo_dict[j] = j
-gen_dict = {'无特点': '无特点', '高清': 'XXXX', '字幕': 'XXXX', '推薦作品': '推荐作品', '通姦': '通奸', '淋浴': '淋浴', '舌頭': '舌头', '下流': '下流',
-            '敏感': '敏感', '變態': '变态', '願望': '愿望', '慾求不滿': '慾求不满', '服侍': '服侍', '外遇': '外遇', '訪問': '访问',
-            '性伴侶': '性伴侣', '保守': '保守', '購物': '购物', '誘惑': '诱惑', '出差': '出差', '煩惱': '烦恼', '主動': '主动',
-            '再會': '再会', '戀物癖': '恋物癖', '問題': '问题', '騙奸': '骗奸', '鬼混': '鬼混', '高手': '高手', '順從': '顺从',
-            '密會': '密会', '做家務': '做家务', '秘密': '秘密', '送貨上門': '送货上门', '壓力': '压力', '處女作': '处女作',
-            '淫語': '淫语', '問卷': '问卷', '住一宿': '住一宿', '眼淚': '眼泪', '跪求': '跪求', '求職': '求职', '婚禮': '婚礼',
-            '第一視角': '第一视角', '洗澡': '洗澡', '首次': '首次', '劇情': '剧情', '約會': '约会', '實拍': '实拍', '同性戀': '同性恋',
-            '幻想': '幻想', '淫蕩': '淫荡', '旅行': '旅行', '面試': '面试', '喝酒': '喝酒', '尖叫': '尖叫', '新年': '新年',
-            '借款': '借款', '不忠': '不忠', '檢查': '检查', '羞恥': '羞耻', '勾引': '勾引', '新人': '新人', '推銷': '推销',
-            'ブルマ': '运动短裤', 'AV女優': 'AV女优', '情人': '情人', '丈夫': '丈夫', '辣妹': '辣妹', 'S級女優': 'S级女优',
-            '白領': '白领', '偶像': '偶像', '兒子': '儿子', '女僕': '女仆', '老師': '老师', '夫婦': '夫妇', '保健室': '保健室',
+gen_dict = {'高清': 'XXXX', '字幕': 'XXXX', '推薦作品': '推荐作品', '通姦': '通奸', '淋浴': '淋浴', '舌頭': '舌头',
+            '下流': '下流', '敏感': '敏感', '變態': '变态', '願望': '愿望', '慾求不滿': '慾求不满', '服侍': '服侍',
+            '外遇': '外遇', '訪問': '访问', '性伴侶': '性伴侣', '保守': '保守', '購物': '购物', '誘惑': '诱惑',
+            '出差': '出差', '煩惱': '烦恼', '主動': '主动', '再會': '再会', '戀物癖': '恋物癖', '問題': '问题',
+            '騙奸': '骗奸', '鬼混': '鬼混', '高手': '高手', '順從': '顺从', '密會': '密会', '做家務': '做家务',
+            '秘密': '秘密', '送貨上門': '送货上门', '壓力': '压力', '處女作': '处女作', '淫語': '淫语', '問卷': '问卷',
+            '住一宿': '住一宿', '眼淚': '眼泪', '跪求': '跪求', '求職': '求职', '婚禮': '婚礼', '第一視角': '第一视角',
+            '洗澡': '洗澡', '首次': '首次', '劇情': '剧情', '約會': '约会', '實拍': '实拍', '同性戀': '同性恋',
+            '幻想': '幻想', '淫蕩': '淫荡', '旅行': '旅行', '面試': '面试', '喝酒': '喝酒', '尖叫': '尖叫',
+            '新年': '新年', '借款': '借款', '不忠': '不忠', '檢查': '检查', '羞恥': '羞耻', '勾引': '勾引',
+            '新人': '新人', '推銷': '推销', 'ブルマ': '运动短裤',
+
+            'AV女優': 'XXXX', '情人': '情人', '丈夫': '丈夫', '辣妹': '辣妹', 'S級女優': 'S级女优', '白領': '白领',
+            '偶像': '偶像', '兒子': '儿子', '女僕': '女仆', '老師': '老师', '夫婦': '夫妇', '保健室': '保健室',
             '朋友': '朋友', '工作人員': '工作人员', '明星': '明星', '同事': '同事', '面具男': '面具男', '上司': '上司',
             '睡眠系': '睡眠系', '奶奶': '奶奶', '播音員': '播音员', '鄰居': '邻居', '親人': '亲人', '店員': '店员',
             '魔女': '魔女', '視訊小姐': '视讯小姐', '大學生': '大学生', '寡婦': '寡妇', '小姐': '小姐', '秘書': '秘书',
             '人妖': '人妖', '啦啦隊': '啦啦队', '美容師': '美容师', '岳母': '岳母', '警察': '警察', '熟女': '熟女',
             '素人': '素人', '人妻': '人妻', '痴女': '痴女', '角色扮演': '角色扮演', '蘿莉': '萝莉', '姐姐': '姐姐',
-            '模特': '模特', '教師': '教师', '學生': '学生', '少女': '少女', '新手': '新手', '男友': '男友', '護士': '护士',
-            '媽媽': '妈妈', '主婦': '主妇', '孕婦': '孕妇', '女教師': '女教师', '年輕人妻': '年轻人妻', '職員': '职员',
-            '看護': '看护', '外觀相似': '外观相似', '色狼': '色狼', '醫生': '医生', '新婚': '新婚', '黑人': '黑人',
-            '空中小姐': '空中小姐', '運動系': '运动系', '女王': '女王', '西裝': '西装', '旗袍': '旗袍', '兔女郎': '兔女郎',
-            '白人': '白人', '制服': '制服', '內衣': '内衣', '休閒裝': '休閒装', '水手服': '水手服', '全裸': '全裸',
-            '不穿內褲': '不穿内裤', '和服': '和服', '不戴胸罩': '不戴胸罩', '連衣裙': '连衣裙', '打底褲': '打底裤',
-            '緊身衣': '紧身衣', '客人': '客人', '晚禮服': '晚礼服', '治癒系': '治癒系', '大衣': '大衣', '裸體襪子': '裸体袜子',
-            '絲帶': '丝带', '睡衣': '睡衣', '面具': '面具', '牛仔褲': '牛仔裤', '喪服': '丧服', '極小比基尼': '极小比基尼',
-            '混血': '混血', '毛衣': '毛衣', '頸鏈': '颈链', '短褲': '短裤', '美人': '美人', '連褲襪': '连裤袜', '裙子': '裙子',
-            '浴衣和服': '浴衣和服', '泳衣': '泳衣', '網襪': '网袜', '眼罩': '眼罩', '圍裙': '围裙', '比基尼': '比基尼',
-            '情趣內衣': '情趣内衣', '迷你裙': '迷你裙', '套裝': '套装', '眼鏡': '眼镜', '丁字褲': '丁字裤', '陽具腰帶':
-                '阳具腰带', '男装': '男装', '襪': '袜', '美肌': '美肌', '屁股': '屁股', '美穴': '美穴', '黑髮': '黑发',
-            '嬌小': '娇小', '曬痕': '晒痕', 'F罩杯': 'F罩杯', 'E罩杯': 'E罩杯', 'D罩杯': 'D罩杯', '素顏': '素颜',
-            '貓眼': '猫眼', '捲髮': '捲发', '虎牙': '虎牙', 'C罩杯': 'C罩杯', 'I罩杯': 'I罩杯', '小麥色': '小麦色',
-            '大陰蒂': '大阴蒂', '美乳': '美乳', '巨乳': '巨乳', '豐滿': '丰满', '苗條': '苗条', '美臀': '美臀', '美腿': '美腿',
-            '無毛': '无毛', '美白': '美白', '微乳': '微乳', '性感': '性感', '高個子': '高个子', '爆乳': '爆乳', 'G罩杯': 'G罩杯',
+            '模特': '模特', '教師': '教师', '學生': '学生', '少女': '少女', '新手': '新手', '男友': '男友',
+            '護士': '护士', '媽媽': '妈妈', '主婦': '主妇', '孕婦': '孕妇', '女教師': '女教师', '年輕人妻': '年轻人妻',
+            '職員': '职员', '看護': '看护', '外觀相似': '外观相似', '色狼': '色狼', '醫生': '医生', '新婚': '新婚',
+            '黑人': '黑人', '空姐': '空中小姐', '運動系': '运动系', '女王': '女王', '西裝': '西装', '旗袍': '旗袍',
+            '兔女郎': '兔女郎', '白人': '白人',
+
+            '制服': '制服', '內衣': '内衣', '休閒裝': '休閒装', '水手服': '水手服', '全裸': '全裸', '不穿內褲': '不穿内裤',
+            '和服': '和服', '不戴胸罩': '不戴胸罩', '連衣裙': '连衣裙', '打底褲': '打底裤', '緊身衣': '紧身衣', '客人': '客人',
+            '晚禮服': '晚礼服', '治癒系': '治癒系', '大衣': '大衣', '裸體襪子': '裸体袜子', '絲帶': '丝带', '睡衣': '睡衣',
+            '面具': '面具', '牛仔褲': '牛仔裤', '喪服': '丧服', '極小比基尼': '极小比基尼', '混血': '混血', '毛衣': '毛衣',
+            '頸鏈': '颈链', '短褲': '短裤', '美人': '美人', '連褲襪': '连裤袜', '裙子': '裙子', '浴衣和服': '浴衣和服',
+            '泳衣': '泳衣', '網襪': '网袜', '眼罩': '眼罩', '圍裙': '围裙', '比基尼': '比基尼', '情趣內衣': '情趣内衣',
+            '迷你裙': '迷你裙', '套裝': '套装', '眼鏡': '眼镜', '丁字褲': '丁字裤', '陽具腰帶': '阳具腰带', '男装': '男装',
+            '襪': '袜',
+
+            '美肌': '美肌', '屁股': '屁股', '美穴': '美穴', '黑髮': '黑发', '嬌小': '娇小', '曬痕': '晒痕',
+            'F罩杯': 'F罩杯', 'E罩杯': 'E罩杯', 'D罩杯': 'D罩杯', '素顏': '素颜', '貓眼': '猫眼', '捲髮': '捲发',
+            '虎牙': '虎牙', 'C罩杯': 'C罩杯', 'I罩杯': 'I罩杯', '小麥色': '小麦色', '大陰蒂': '大阴蒂', '美乳': '美乳',
+            '巨乳': '巨乳', '豐滿': '丰满', '苗條': '苗条', '美臀': '美臀', '美腿': '美腿', '無毛': '无毛',
+            '美白': '美白', '微乳': '微乳', '性感': '性感', '高個子': '高个子', '爆乳': '爆乳', 'G罩杯': 'G罩杯',
             '多毛': '多毛', '巨臀': '巨臀', '軟體': '软体', '巨大陽具': '巨大阳具', '長發': '长发', 'H罩杯': 'H罩杯',
+
+
             '舔陰': '舔阴', '電動陽具': '电动阳具', '淫亂': '淫乱', '射在外陰': '射在外阴', '猛烈': '猛烈', '後入內射': '后入内射',
-            '足交': '足交', '射在胸部': '射在胸部', '側位內射': '侧位内射', '射在腹部': '射在腹部', '騎乘內射': '骑乘内射',
-            '射在頭髮': '射在头发', '母乳': '母乳', '站立姿勢': '站立姿势', '肛射': '肛射', '陰道擴張': '阴道扩张',
-            '內射觀察': '内射观察', '射在大腿': '射在大腿', '精液流出': '精液流出', '射在屁股': '射在屁股', '內射潮吹': '内射潮吹',
-            '首次肛交': '首次肛交', '射在衣服上': '射在衣服上', '首次內射': '首次内射', '早洩': '早洩', '翻白眼': '翻白眼',
-            '舔腳': '舔脚', '喝尿': '喝尿', '口交': '口交', '內射': '内射', '自慰': '自慰', '後入': '后入', '騎乘位': '骑乘位',
-            '顏射': '颜射', '口內射精': '口内射精', '手淫': '手淫', '潮吹': '潮吹', '輪姦': '轮奸', '亂交': '乱交', '乳交': '乳交',
-            '小便': '小便', '吸精': '吸精', '深膚色': '深肤色', '指法': '指法', '騎在臉上': '骑在脸上', '連續內射': '连续内射',
-            '打樁機': '打桩机', '肛交': '肛交', '吞精': '吞精', '鴨嘴': '鸭嘴', '打飛機': '打飞机', '剃毛': '剃毛',
-            '站立位': '站立位', '高潮': '高潮', '二穴同入': '二穴同入', '舔肛': '舔肛', '多人口交': '多人口交', '痙攣':
-                '痉挛', '玩弄肛門': '玩弄肛门', '立即口交': '立即口交', '舔蛋蛋': '舔蛋蛋', '口射': '口射', '陰屁': '阴屁',
-            '失禁': '失禁', '大量潮吹': '大量潮吹', '69': '69', '振動': '振动', '搭訕': '搭讪', '奴役': '奴役',
-            '打屁股': '打屁股', '潤滑油': '润滑油', '按摩': '按摩', '散步': '散步', '扯破連褲襪': '扯破连裤袜', '手銬': '手铐',
-            '束縛': '束缚', '調教': '调教', '假陽具': '假阳具', '變態遊戲': '变态游戏', '注視': '注视', '蠟燭': '蜡烛',
-            '電鑽': '电钻', '亂搞': '乱搞', '摩擦': '摩擦', '項圈': '项圈', '繩子': '绳子', '灌腸': '灌肠', '監禁': '监禁',
-            '車震': '车震', '鞭打': '鞭打', '懸掛': '悬挂', '喝口水': '喝口水', '精液塗抹': '精液涂抹', '舔耳朵': '舔耳朵',
-            '女體盛': '女体盛', '便利店': '便利店', '插兩根': '插两根', '開口器': '开口器', '暴露': '暴露',
-            '陰道放入食物': '阴道放入食物', '大便': '大便', '經期': '经期', '惡作劇': '恶作剧', '電動按摩器': '电动按摩器',
-            '凌辱': '凌辱', '玩具': '玩具', '露出': '露出', '肛門': '肛门', '拘束': '拘束', '多P': '多P', '潤滑劑': '润滑剂',
-            '攝影': '摄影', '野外': '野外', '陰道觀察': '阴道观察', 'SM': 'SM', '灌入精液': '灌入精液', '受虐': '受虐',
-            '綁縛': '绑缚', '偷拍': '偷拍', '異物插入': '异物插入', '電話': '电话', '公寓': '公寓', '遠程操作': '远程操作',
-            '偷窺': '偷窥', '踩踏': '踩踏', '無套': '无套', '企劃物': '企划物', '獨佔動畫': '独佔动画', '10代': '10代',
-            '1080p': 'XXXX', '人氣系列': '人气系列', '60fps': 'XXXX', '超VIP': '超VIP', '投稿': '投稿', 'VIP': 'VIP',
-            '椅子': '椅子', '風格出眾': '风格出众', '首次作品': '首次作品', '更衣室': '更衣室', '下午': '下午', 'KTV': 'KTV',
-            '白天': '白天', '最佳合集': '最佳合集', 'VR': 'VR', '動漫': '动漫', '酒店': '酒店', '密室': '密室', '車': '车',
-            '床': '床', '陽台': '阳台', '公園': '公园', '家中': '家中', '公交車': '公交车', '公司': '公司', '門口': '门口',
-            '附近': '附近', '學校': '学校', '辦公室': '办公室', '樓梯': '楼梯', '住宅': '住宅', '公共廁所': '公共厕所',
-            '旅館': '旅馆', '教室': '教室', '廚房': '厨房', '桌子': '桌子', '大街': '大街', '農村': '农村', '和室': '和室',
-            '地下室': '地下室', '牢籠': '牢笼', '屋頂': '屋顶', '游泳池': '游泳池', '電梯': '电梯', '拍攝現場': '拍摄现场',
-            '別墅': '别墅', '房間': '房间', '愛情旅館': '爱情旅馆', '車內': '车内', '沙發': '沙发', '浴室': '浴室',
-            '廁所': '厕所', '溫泉': '温泉', '醫院': '医院', '榻榻米': '榻榻米', '中文字幕': '中文字幕'}                   # 特点，繁转简
+            '足交': '足交', '射在胸部': '射在胸部', '側位內射': '侧位内射', '射在腹部': '射在腹部', '騎乘內射': '骑乘内射', '射在頭髮': '射在头发',
+            '母乳': '母乳', '站立姿勢': '站立姿势', '肛射': '肛射', '陰道擴張': '阴道扩张', '內射觀察': '内射观察', '射在大腿': '射在大腿',
+            '精液流出': '精液流出', '射在屁股': '射在屁股', '內射潮吹': '内射潮吹', '首次肛交': '首次肛交', '射在衣服上': '射在衣服上', '首次內射': '首次内射',
+            '早洩': '早洩', '翻白眼': '翻白眼', '舔腳': '舔脚', '喝尿': '喝尿', '口交': '口交', '內射': '内射',
+            '自慰': '自慰', '後入': '后入', '騎乘位': '骑乘位', '顏射': '颜射', '口內射精': '口内射精', '手淫': '手淫',
+            '潮吹': '潮吹', '輪姦': '轮奸', '亂交': '乱交', '乳交': '乳交', '小便': '小便', '吸精': '吸精',
+            '深膚色': '深肤色', '指法': '指法', '騎在臉上': '骑在脸上', '連續內射': '连续内射', '打樁機': '打桩机', '肛交': '肛交',
+            '吞精': '吞精', '鴨嘴': '鸭嘴', '打飛機': '打飞机', '剃毛': '剃毛', '站立位': '站立位', '高潮': '高潮',
+            '二穴同入': '二穴同入', '舔肛': '舔肛', '多人口交': '多人口交', '痙攣': '痉挛', '玩弄肛門': '玩弄肛门', '立即口交': '立即口交',
+            '舔蛋蛋': '舔蛋蛋', '口射': '口射', '陰屁': '阴屁', '失禁': '失禁', '大量潮吹': '大量潮吹', '69': '69',
+
+            '振動': '振动', '搭訕': '搭讪', '奴役': '奴役', '打屁股': '打屁股', '潤滑油': '润滑油',
+            '按摩': '按摩', '散步': '散步', '扯破連褲襪': '扯破连裤袜', '手銬': '手铐', '束縛': '束缚', '調教': '调教',
+            '假陽具': '假阳具', '變態遊戲': '变态游戏', '注視': '注视', '蠟燭': '蜡烛', '電鑽': '电钻', '亂搞': '乱搞',
+            '摩擦': '摩擦', '項圈': '项圈', '繩子': '绳子', '灌腸': '灌肠', '監禁': '监禁', '車震': '车震',
+            '鞭打': '鞭打', '懸掛': '悬挂', '喝口水': '喝口水', '精液塗抹': '精液涂抹', '舔耳朵': '舔耳朵', '女體盛': '女体盛',
+            '便利店': '便利店', '插兩根': '插两根', '開口器': '开口器', '暴露': '暴露', '陰道放入食物': '阴道放入食物', '大便': '大便',
+            '經期': '经期', '惡作劇': '恶作剧', '電動按摩器': '电动按摩器', '凌辱': '凌辱', '玩具': '玩具', '露出': '露出',
+            '肛門': '肛门', '拘束': '拘束', '多P': '多P', '潤滑劑': '润滑剂', '攝影': '摄影', '野外': '野外',
+            '陰道觀察': '阴道观察', 'SM': 'SM', '灌入精液': '灌入精液', '受虐': '受虐', '綁縛': '绑缚', '偷拍': '偷拍',
+            '異物插入': '异物插入', '電話': '电话', '公寓': '公寓', '遠程操作': '远程操作', '偷窺': '偷窥', '踩踏': '踩踏',
+            '無套': '无套',
+
+            '企劃物': '企划物', '獨佔動畫': '独佔动画', '10代': '10代', '1080p': 'XXXX', '人氣系列': '人气系列', '60fps': 'XXXX',
+            '超VIP': '超VIP', '投稿': '投稿', 'VIP': 'VIP', '椅子': '椅子', '風格出眾': '风格出众', '首次作品': '首次作品',
+            '更衣室': '更衣室', '下午': '下午', 'KTV': 'KTV', '白天': '白天', '最佳合集': '最佳合集', 'VR': 'VR',
+            '動漫': '动漫',
+
+            '酒店': '酒店', '密室': '密室', '車': '车', '床': '床', '陽台': '阳台', '公園': '公园',
+            '家中': '家中', '公交車': '公交车', '公司': '公司', '門口': '门口', '附近': '附近', '學校': '学校',
+            '辦公室': '办公室', '樓梯': '楼梯', '住宅': '住宅', '公共廁所': '公共厕所', '旅館': '旅馆', '教室': '教室',
+            '廚房': '厨房', '桌子': '桌子', '大街': '大街', '農村': '农村', '和室': '和室', '地下室': '地下室',
+            '牢籠': '牢笼', '屋頂': '屋顶', '游泳池': '游泳池', '電梯': '电梯', '拍攝現場': '拍摄现场', '別墅': '别墅',
+            '房間': '房间', '愛情旅館': '爱情旅馆', '車內': '车内', '沙發': '沙发', '浴室': '浴室', '廁所': '厕所',
+            '溫泉': '温泉', '醫院': '医院', '榻榻米': '榻榻米', '中文字幕': '中文字幕'}                   # 特点，繁转简
 
 start_key = ''
 while start_key == '':
@@ -295,16 +324,22 @@ while start_key == '':
         if if_exnfo == '是' and files and (files[-1].endswith('nfo') or (len(files) > 1 and files[-2].endswith('nfo'))):
             continue
         # 对这一层文件夹进行评估,有多少视频，有多少同车牌视频，是不是独立文件夹
-        car_videos = []  # 存放：需要整理的jav的结构体
+        jav_videos = []  # 存放：需要整理的jav的结构体
         cars_dic = {}
         videos_num = 0  # 当前文件夹中视频的数量，可能有视频不是jav
         subtitles = False      # 有没有字幕
-        nfo_dict['是否中字'] = ''
+        subts_dict = {}          # 存放：jav的字幕文件
         for raw_file in files:
             # 判断文件是不是字幕文件
             if raw_file.endswith(('.srt', '.vtt', '.ass',)):
-                subtitles = True
+                srt_g = re.search(r'([a-zA-Z0-9]+-?_?[a-zA-Z0-9]+-?_?\d*)', raw_file)  # 这个正则表达式匹配“车牌号”可能有点奇怪，
+                if str(srt_g) != 'None':  # 如果你下过上千部片，各种参差不齐的命名，你就会理解我了。
+                    car_num = srt_g.group(1)
+                    subts_dict[raw_file] = car_num
                 continue
+        # print(subts_dict)
+        # print('>>扫描字幕文件完毕！')
+        for raw_file in files:
             # 判断是不是视频，得到车牌号
             if raw_file.endswith(type_tuple) and not raw_file.startswith('.'):  # ([a-zA-Z]*\d*-?)+
                 videos_num += 1
@@ -328,14 +363,17 @@ while start_key == '':
                     jav_file.car = car_num
                     jav_file.name = raw_file
                     jav_file.episodes = cars_dic[car_num]
-                    car_videos.append(jav_file)
+                    if car_num in subts_dict.values():
+                        jav_file.subt = list(subts_dict.keys())[list(subts_dict.values()).index(car_num)]
+                        del subts_dict[jav_file.subt]
+                    jav_videos.append(jav_file)
                 else:
                     continue
             else:
                 continue
-
+        # 判定影片所在文件夹是否是独立文件夹
         if cars_dic:
-            if len(cars_dic) > 1 or videos_num > len(car_videos) or len(dirs) > 1 or (
+            if len(cars_dic) > 1 or videos_num > len(jav_videos) or len(dirs) > 1 or (
                     len(dirs) == 1 and dirs[0] != '.actors'):
                 # 当前文件夹下， 车牌不止一个，还有其他非jav视频，有其他文件夹
                 separate_folder = False
@@ -345,11 +383,10 @@ while start_key == '':
             continue
 
         # 正式开始
-        # print(car_videos)
-        for srt in car_videos:
+        # print(jav_videos)
+        for srt in jav_videos:
             car_num = srt.car
             file = srt.name
-            video_type = '.' + file.split('.')[-1]  # 文件类型，如：.mp4
             relative_path = '\\' + root.lstrip(path) + '\\' + file  # 影片的相对于所选文件夹的路径，用于报错
             try:
                 # 获取nfo信息的javbus搜索网页
@@ -436,10 +473,10 @@ while start_key == '':
                     bav_html = get_jav_html(jav_list)
                 except:
                     fail_times += 1
-                    fail_message = '    >第' + str(fail_times) + '个失败！打开javbus上的jav网页失败：' + bav_url + '，' + relative_path + '\n'
-                    print(fail_message, end='')
-                    fail_list.append(fail_message)
-                    write_fail(fail_message)
+                    fail_message = '第' + str(fail_times) + '个失败！打开javbus上的jav网页失败：' + bav_url + '，' + relative_path + '\n'
+                    print('>>' + fail_message, end='')
+                    fail_list.append('    >' + fail_message)
+                    write_fail('    >' + fail_message)
                     continue
 
                 # 正则匹配 影片信息 开始！
@@ -455,12 +492,34 @@ while start_key == '':
                     continue
 
                 print('>>正在处理：', title)
+                # 影片的一些属性
+                video_type = '.' + file.split('.')[-1]  # 文件类型，如：.mp4
+                subt_name = srt.subt
+                if subt_name:
+                    subtitles = True
+                    subt_type = '.' + subt_name.split('.')[-1]  # 文件类型，如：.srt
+                else:
+                    subtitles = False
+                    subt_type = ''
+                nfo_dict['是否中字'] = ''
+                if not subtitles:  # 没有外挂字幕
+                    for i in word_list:
+                        if i in file:
+                            nfo_dict['是否中字'] = custom_subt
+                            break
+                else:
+                    nfo_dict['是否中字'] = custom_subt
+                nfo_dict['是否xx'] = ''
+                for i in xx_list:
+                    if i in file:
+                        nfo_dict['是否xx'] = custom_xx
+                        break
                 # 去除title中的特殊字符
                 title = title.replace('\n', '').replace('&', '和').replace('\\', '#') \
                     .replace('/', '#').replace(':', '：').replace('*', '#').replace('?', '？') \
                     .replace('"', '#').replace('<', '【').replace('>', '】') \
                     .replace('|', '#').replace('＜', '【').replace('＞', '】') \
-                    .replace('〈', '【').replace('〉', '】').replace('.', '。').replace('＆', '和')
+                    .replace('〈', '【').replace('〉', '】').replace('＆', '和').replace('\t', '').replace('\r', '')
                 # 正则匹配 影片信息 开始！
                 # title的开头是车牌号，想要后面的纯标题
                 car_titleg = re.search(r'(.+?) (.+)', title)  # 这边匹配番号，[a-z]可能很奇怪，
@@ -486,7 +545,6 @@ while start_key == '':
                     nfo_dict['片商'] = studiog.group(1)
                 else:
                     nfo_dict['片商'] = '未知片商'
-                gen_dict['片商：' + nfo_dict['片商']] = '片商：' + nfo_dict['片商']
                 # 發行日期:</span> 2019-03-06</p>
                 premieredg = re.search(r'發行日期:</span> (.+?)</p>', bav_html)
                 if str(premieredg) != 'None':
@@ -511,6 +569,8 @@ while start_key == '':
                 actors = re.findall(r'<img src="https://images.javcdn.pw/actress/.+?" title="(.+?)"></a>', bav_html)
                 # print(actors)
                 if len(actors) != 0:
+                    if len(actors) > 7:
+                        actors = actors[:7]
                     nfo_dict['首个女优'] = actors[0]
                     nfo_dict['全部女优'] = ' '.join(actors)
                 else:
@@ -519,11 +579,9 @@ while start_key == '':
                 nfo_dict['标题'] = nfo_dict['标题'].rstrip(nfo_dict['全部女优'])
                 # 特点 <span class="genre"><a href="https://www.cdnbus.work/uncensored/genre/gre085">自慰</a></span>
                 genres = re.findall(r'<span class="genre"><a href=".+?">(.+?)</a></span>', bav_html)
-                genres = [i for i in genres if i != '字幕' and i != '高清' and i != '1080p' and i != '60fps']
-                genres.append('片商：' + nfo_dict['片商'])
-                if '-c.' in file or '-C.' in file or subtitles:
+                genres = [i for i in genres if i != '字幕' and i != '高清' and i != '1080p' and i != '60fps' and i != 'AV女優']
+                if nfo_dict['是否中字']:
                     genres.append('中文字幕')
-                    nfo_dict['是否中字'] = custom_subtitle
                 # DVD封面cover
                 cover_url = ''
                 coverg = re.search(r'<a class="bigImage" href="(.+?)">', bav_html)  # 封面图片的正则对象
@@ -552,16 +610,51 @@ while start_key == '':
                     # file发生了变化
                     file = new_mp4 + video_type
                     print('    >修改文件名' + cd_msg + '完成')
+                    if subt_name:
+                        os.rename(root + '\\' + subt_name, root + '\\' + new_mp4 + subt_type)
+                        subt_name = new_mp4 + subt_type
+                        print('    >修改字幕名完成')
+
+                # nfo_dict['视频']用于图片的命名
+                nfo_dict['视频'] = new_mp4
+
+                # 1.5 归类影片，只针对影片
+                if if_classify == '是' and file_folder != '文件夹':
+                    # 需要归类影片，针对这个影片
+                    class_root = classify_root + '\\'
+                    # 移动的目标文件夹
+                    for j in classify_list:
+                        class_root += nfo_dict[j].rstrip(' .')  # C:\\Users\\JuneRain\\Desktop\\测试文件夹\\1\\葵司\\
+                    new_root = class_root  # 新的影片的目录路径，C:\\Users\\JuneRain\\Desktop\\测试文件夹\\1\\葵司\\
+                    new_folder = new_root.split('\\')[-1]  # 新的影片的目录名称，变成了目标目录“葵司”
+                    if not os.path.exists(new_root):  # 不存在目标文件夹
+                        os.makedirs(new_root)
+                    jav_new_path = new_root + '\\' + file  # 新的影片路径
+                    if not os.path.exists(jav_new_path):  # 目标文件夹没有相同的影片
+                        os.rename(root + '\\' + file, jav_new_path)
+                        print('    >归类影片文件完成')
+                        if subt_name:
+                            os.rename(root + '\\' + subt_name, new_root + '\\' + subt_name)
+                            print('    >归类字幕文件完成')
+                    else:
+                        fail_times += 1
+                        fail_message = '    >第' + str(
+                            fail_times) + '个失败！归类失败，重复的影片，归类的目标文件夹已经存在相同的影片：' + jav_new_path + '\n'
+                        print(fail_message, end='')
+                        fail_list.append(fail_message)
+                        write_fail(fail_message)
+                        continue
+                else:
+                    new_root = root  # 当前影片的目录路径，在下面的重命名操作中将发生变化
+                    new_folder = root.split('\\')[-1]  # 当前影片的目录名称，在下面的重命名操作中即将发生变化
 
                 # 2重命名文件夹
-                new_root = root                      # 当前影片的新目录路径
-                new_folder = root.split('\\')[-1]    # 当前影片的新目录名称
-                if if_floder == '是':
+                if if_folder == '是':
                     # 新文件夹名rename_folder
                     new_folder = ''
                     for j in rename_folder_list:
                         new_folder += (nfo_dict[j])
-                    new_folder = new_folder.rstrip(' ')
+                    new_folder = new_folder.rstrip(' .')
                     if separate_folder:
                         if cars_dic[car_num] == 1 or (
                                 cars_dic[car_num] > 1 and cars_dic[car_num] == srt.episodes):  # 同一车牌有多部，且这是最后一部，才会重命名
@@ -578,6 +671,9 @@ while start_key == '':
                         os.rename(root + '\\' + file, root + '\\' + new_folder + '\\' + file)  # 就把影片放进去
                         new_root = root + '\\' + new_folder  # 在当前文件夹下再创建新文件夹
                         print('    >创建独立的文件夹完成')
+                        if subt_name:
+                            os.rename(root + '\\' + subt_name, root + '\\' + new_folder + '\\' + subt_name)  # 就把字幕放进去
+                            print('    >移动字幕到独立文件夹')
 
                 # 更新一下relative_path
                 relative_path = '\\' + new_root.lstrip(path) + '\\' + file  # 影片的相对于所选文件夹的路径，用于报错
@@ -608,21 +704,29 @@ while start_key == '':
                     if simp_trad == '简':
                         for i in genres:
                             f.write("  <genre>" + gen_dict[i] + "</genre>\n")
+                        f.write("  <genre>片商：" + nfo_dict['片商'] + "</genre>\n")
+                        if sets:
+                            f.write("  <genre>系列：" + sets + "</genre>\n")
+                            f.write("  <tag>系列：" + sets + "</tag>\n")
                         for i in genres:
                             f.write("  <tag>" + gen_dict[i] + "</tag>\n")
+                        f.write("  <tag>片商：" + nfo_dict['片商'] + "</tag>\n")
                     else:
                         for i in genres:
                             f.write("  <genre>" + i + "</genre>\n")
+                        f.write("  <genre>片商：" + nfo_dict['片商'] + "</genre>\n")
+                        if sets:
+                            f.write("  <genre>系列：" + sets + "</genre>\n")
+                            f.write("  <tag>系列：" + sets + "</tag>\n")
                         for i in genres:
                             f.write("  <tag>" + i + "</tag>\n")
+                        f.write("  <tag>片商：" + nfo_dict['片商'] + "</tag>\n")
                     for i in actors:
                         f.write("  <actor>\n    <name>" + i + "</name>\n    <type>Actor</type>\n  </actor>\n")
                     f.write("</movie>\n")
                     f.close()
                     print('    >nfo收集完成')
 
-                # nfo_dict['视频']用于图片的命名
-                nfo_dict['视频'] = new_mp4
                 # 4需要下载三张图片
                 if if_jpg == '是':
                     # fanart和poster路径
@@ -681,9 +785,9 @@ while start_key == '':
                         for each_actor in actors:
                             exist_actor_path = '女优头像\\' + each_actor + '.jpg'
                             jpg_type = '.jpg'
-                            if not os.path.exists(exist_actor_path):  # 女优图片还没有
+                            if not os.path.exists(exist_actor_path):  # 女优jpg图片还没有
                                 exist_actor_path = '女优头像\\' + each_actor + '.png'
-                                if not os.path.exists(exist_actor_path):  # 女优图片还没有
+                                if not os.path.exists(exist_actor_path):  # 女优png图片还没有
                                     fail_times += 1
                                     fail_message = '    >第' + str(
                                         fail_times) + '个失败！没有女优头像：' + each_actor + '，' + relative_path + '\n'
@@ -708,8 +812,8 @@ while start_key == '':
                                             actors_path + each_actor + jpg_type)
                             print('    >女优头像收集完成：', each_actor)
 
-                # 6移动文件夹
-                if if_classify == '是' and (
+                # 6归类影片，针对文件夹
+                if if_classify == '是' and file_folder == '文件夹' and (
                         cars_dic[car_num] == 1 or (cars_dic[car_num] > 1 and cars_dic[car_num] == srt.episodes)):
                     # 需要移动文件夹，且，是该影片的最后一集
                     if separate_folder and classify_root.startswith(root):
@@ -718,7 +822,7 @@ while start_key == '':
                     class_root = classify_root + '\\'
                     # 移动的目标文件夹
                     for j in classify_list:
-                        class_root += nfo_dict[j]  # C:\\Users\\JuneRain\\Desktop\\测试文件夹\\1\\葵司\\
+                        class_root += nfo_dict[j].rstrip(' .')  # C:\\Users\\JuneRain\\Desktop\\测试文件夹\\1\\葵司\\
                     new_new_root = class_root + new_folder  # 移动的目标文件夹 C:\\Users\\JuneRain\\Desktop\\测试文件夹\\1\\葵司\\【葵司】AVOP-127
                     if not os.path.exists(new_new_root):    # 不存在目标目录
                         os.makedirs(new_new_root)
@@ -728,15 +832,12 @@ while start_key == '':
                         os.rmdir(new_root)
                         print('    >归类文件夹完成')
                     else:
-                        print(traceback.format_exc())
+                        # print(traceback.format_exc())
                         fail_times += 1
                         fail_message = '    >第' + str(fail_times) + '个失败！归类失败，重复的影片，归类的根目录已存在相同文件夹：' + new_new_root + '\n'
                         print(fail_message, end='')
                         fail_list.append(fail_message)
                         write_fail(fail_message)
-                        if not os.path.exists(path + '\\归类失败'):  # 还不存在失败文件夹，先创建一个
-                            os.makedirs(path + '\\归类失败')
-                        shutil.move(new_root, path + '\\归类失败\\' + new_root.split('\\')[-1])
                         continue
 
             except:
