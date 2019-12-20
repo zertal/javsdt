@@ -15,7 +15,7 @@ python3.7  使用pyinstaller打包成exe。
 如果以上链接失效，请进入[“release”](https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases)找到之前的发布下载。  
 
 [电报群](https://t.me/javsdtool)  
-<a target="_blank" href="//shang.qq.com/wpa/qunwpa?idkey=79a735ccf11ed7f15481ae02f6a58f16315b8b424149455b4dc65868362f4b30">企鹅群</a>  
+企鹅群被“端”了  
 
 
 
