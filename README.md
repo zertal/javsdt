@@ -11,10 +11,10 @@ python3.7  使用pyinstaller打包成发行版exe。
     目前19-12-20更新1.0.1版本  
     [前往下载exe](https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases/tag/V1.0.1)或者[从蓝奏云下载](https://www.lanzous.com/i85lzcb)  
   
-    [前往下载女优头像](https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases/tag/女优头像)   
+[前往下载女优头像](https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases/tag/女优头像)   
   
-    [电报群](https://t.me/javsdtool)  
-    企鹅群被“端”了  
+[电报群](https://t.me/javsdtool)  
+企鹅群被“端”了  
   
 3、工作流程：  
     （1）用户选择文件夹，遍历路径下的所有文件。  
