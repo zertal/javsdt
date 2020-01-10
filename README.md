@@ -1,5 +1,5 @@
-# JAV-Scraper-and-Rename-local-files
-简介：收集jav元数据，并规范本地文件（夹）的格式，为emby、kodi、jellyfin收集女优头像。  
+# jav-standard-tool 简称javsdt
+简介：收集jav元数据，并规范本地文件（夹）的格式，收集女优头像，为emby、kodi、jellyfin、极影派等影片管理软件铺路。  
 python3.7  使用pyinstaller打包成发行版exe。  
 
 1、运行源代码：  
