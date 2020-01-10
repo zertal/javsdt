@@ -14,7 +14,7 @@ python3.7  使用pyinstaller打包成发行版exe。
 [前往下载女优头像](https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases/tag/女优头像)   
   
 [电报群](https://t.me/javsdtool)  
-企鹅群被“端”了  
+[企鹅群](https://jq.qq.com/?_wv=1027&k=5CbWOpV)  
   
 3、工作流程：  
     （1）用户选择文件夹，遍历路径下的所有文件。  
