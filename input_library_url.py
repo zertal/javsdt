@@ -174,7 +174,7 @@ else:
 nfo_dict = {'空格': ' ', '车牌': 'ABC-123', '标题': '未知标题', '完整标题': '完整标题', '导演': '未知导演',
             '发行年月日': '1970-01-01', '发行年份': '1970', '月': '01', '日': '01', '是否中字': '', '是否xx': '',
             '片商': '未知片商', '评分': '0', '首个女优': '未知演员', '全部女优': '未知演员', '车牌前缀': 'ABC',
-            '片长': '0', '\\': '\\', '视频': 'ABC-123', '影片类型': movie_type}  # 用于暂时存放影片信息，女优，标题等
+            '片长': '0', '\\': '\\', '视频': 'ABC-123', '影片类型': movie_type, '系列': '未知系列'}  # 用于暂时存放影片信息，女优，标题等
 rename_mp4_list = rename_mp4.split('+')
 title_list = custom_title.replace('标题', '完整标题', 1).split('+')
 fanart_list = custom_fanart.split('+')
@@ -310,7 +310,7 @@ while 1:
         else:
             nfo_dict['评分'] = '0'
         criticrating = str(float(nfo_dict['评分'])*10)
-        # javlib的精彩影评   (.+?\s*.*?\s*.*?\s*.*?)  不用影片简介，用jaclib上的精彩影片，下面的匹配可能很奇怪，没办法，就这么奇怪
+        # javlib的精彩影评   (.+?\s*.*?\s*.*?\s*.*?)  用javlib上的精彩影片，下面的匹配可能很奇怪，没办法，就这么奇怪
         plot_review = ''
         if if_review == '是':
             review = re.findall(r'(hidden">.+?</textarea>)</td>\s*?<td class="scores"><table>\s*?<tr><td><span class="scoreup">\d\d+?</span>', javlib_html, re.DOTALL)
@@ -330,7 +330,7 @@ while 1:
         # 企划javlib上没有企划set
         #######################################################################
         # arzon的简介
-        plot = ''
+        plot = series = ''
         if if_nfo == '是' and if_plot == '是':
             while 1:
                 arz_search_url = 'https://www.arzon.jp/itemlist.html?t=&m=all&s=&q=' + nfo_dict['车牌']
@@ -382,7 +382,12 @@ while 1:
                                         .replace('"', '#').replace('<', '【').replace('>', '】') \
                                         .replace('|', '#').replace('＜', '【').replace('＞', '】') \
                                         .replace('〈', '【').replace('〉', '】').replace('＆', '和').replace('\t', '').replace('\r', '')
-                                    plot = '【影片简介】：' + plot
+                                    # 系列<a href="/itemlist.html?mkr=10149&series=43">麗しのノーブラ先生</a>
+                                    seriesg = re.search(r'series=\d+">(.+?)</a>', jav_html)
+                                    if str(seriesg) != 'None':
+                                        series = nfo_dict['系列'] = seriesg.group(1)
+                                    else:
+                                        nfo_dict['系列'] = '未知系列'
                                     break
                         # 几个搜索结果查找完了，也没有找到简介
                         if plot == '':
@@ -443,13 +448,18 @@ while 1:
                     "  <country>日本</country>\n"
                     "  <studio>" + nfo_dict['片商'] + "</studio>\n"
                     "  <id>" + nfo_dict['车牌'] + "</id>\n"
-                    "  <num>" + nfo_dict['车牌'] + "</num>\n")
+                    "  <num>" + nfo_dict['车牌'] + "</num>\n"
+                    "  <set>" + series + "</set>\n")
             for i in genres:
                 f.write("  <genre>" + i + "</genre>\n")
-            f.write("  <genre>片商：" + nfo_dict['片商'] + "</genre>\n")
+            if series:
+                f.write("  <genre>系列:" + series + "</genre>\n")
+            f.write("  <genre>片商:" + nfo_dict['片商'] + "</genre>\n")
             for i in genres:
                 f.write("  <tag>" + i + "</tag>\n")
-            f.write("  <tag>片商：" + nfo_dict['片商'] + "</tag>\n")
+            if series:
+                f.write("  <tag>系列:" + series + "</tag>\n")
+            f.write("  <tag>片商:" + nfo_dict['片商'] + "</tag>\n")
             for i in actors:
                 f.write("  <actor>\n    <name>" + i + "</name>\n    <type>Actor</type>\n    <thumb></thumb>\n  </actor>\n")
             f.write("</movie>\n")
