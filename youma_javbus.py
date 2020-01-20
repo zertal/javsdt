@@ -70,9 +70,9 @@ def get_acook(prox):
 # 获取网页源码，返回网页text；假装python的“重载”函数
 def get_jav_html(url_list):
     if len(url_list) == 1:
-        rqs = requests.get(url_list[0], timeout=10)
+        rqs = requests.get(url_list[0], timeout=10, headers={'Cookie': 'existmag=all'})
     else:
-        rqs = requests.get(url_list[0], proxies=url_list[1], timeout=10)
+        rqs = requests.get(url_list[0], proxies=url_list[1], timeout=10, headers={'Cookie': 'existmag=all'})
     rqs.encoding = 'utf-8'
     return rqs.text
 
@@ -140,6 +140,8 @@ try:
     rename_mp4 = config_settings.get("重命名影片", "重命名影片的格式")
     if_folder = config_settings.get("修改文件夹", "是否重命名或创建独立文件夹？")
     rename_folder = config_settings.get("修改文件夹", "新文件夹的格式")
+    if_rename_subt = config_settings.get("字幕文件", "是否重命名已有的字幕文件")
+    if_classify_subt = config_settings.get("字幕文件", "是否使用字幕库")
     if_classify = config_settings.get("归类影片", "是否归类影片？")
     file_folder = config_settings.get("归类影片", "针对文件还是文件夹？")
     classify_root = config_settings.get("归类影片", "归类的根目录")
@@ -227,7 +229,7 @@ nfo_dict = {'空格': ' ', '车牌': 'ABC-123', '标题': '未知标题', '完�
             '发行年月日': '1970-01-01', '发行年份': '1970', '月': '01', '日': '01',
             '片商': '未知片商', '首个女优': '未知演员', '全部女优': '未知演员',
             '片长': '0', '\\': '\\', '是否中字': '', '视频': 'ABC-123', '车牌前缀': 'ABC',
-            '是否xx': '', '影片类型': movie_type}         # 用于暂时存放影片信息，女优，标题等
+            '是否xx': '', '影片类型': movie_type, '系列': '未知系列'}         # 用于暂时存放影片信息，女优，标题等
 suren_list = suren_pref.split('、')              # 素人番号的列表
 rename_mp4_list = rename_mp4.split('+')          # 重命名视频的格式
 rename_folder_list = rename_folder.split('+')    # 重命名文件夹的格式
@@ -284,7 +286,7 @@ gen_dict = {'折磨': '折磨', '嘔吐': '呕吐', '觸手': '触手', '蠻橫�
             '超級女英雄': '超级女英雄',
 
             '角色扮演': '角色扮演', '制服': '制服', '女戰士': '女战士', '及膝襪': '及膝袜', '娃娃': '娃娃', '女忍者': '女忍者',
-            '女裝人妖': '女装人妖', '內衣': '內衣', '猥褻穿著': '猥亵穿着', '貓耳女': '猫耳女', '女祭司': '女祭司',
+            '女裝人妖': '女装人妖', '內衣': '內衣', '猥褻穿著': '猥亵穿着', '兔女郎': '兔女郎', '貓耳女': '猫耳女', '女祭司': '女祭司',
             '泡泡襪': '泡泡袜', '緊身衣': '紧身衣', '裸體圍裙': '裸体围裙', '迷你裙警察': '迷你裙警察', '空中小姐': '空中小姐',
             '連褲襪': '连裤袜', '身體意識': '身体意识', 'OL': 'OL', '和服・喪服': '和服・丧服', '體育服': '体育服', '内衣': '内衣',
             '水手服': '水手服', '學校泳裝': '学校泳装', '旗袍': '旗袍', '女傭': '女佣', '迷你裙': '迷你裙', '校服': '校服',
@@ -334,7 +336,8 @@ gen_dict = {'折磨': '折磨', '嘔吐': '呕吐', '觸手': '触手', '蠻橫�
             '面接': '面试', 'お風呂': '浴室', '叔母さん': '叔母阿姨', '罵倒': '骂倒', 'お爺ちゃん': '爷爷', '逆レイプ': '强奸小姨子',
             'ディルド': 'ディルド', 'ヨガ': '瑜伽', '飲み会・合コン': '酒会、联谊会', '部活・マネージャー': '社团经理', 'お婆ちゃん': '外婆', 'ビジネススーツ': '商务套装',
             'チアガール': '啦啦队女孩', 'ママ友': '妈妈的朋友', 'エマニエル': '片商Emanieru熟女塾', '妄想族': '妄想族', '蝋燭': '蜡烛', '鼻フック': '鼻钩儿',
-            '放置': '放置', 'サンプル動画': '范例影片', 'サイコ・スリラー': '心理惊悚片', 'ラブコメ': '爱情喜剧', '中文字幕': '中文字幕'}
+            '放置': '放置', 'サンプル動画': '范例影片', 'サイコ・スリラー': '心理惊悚片', 'ラブコメ': '爱情喜剧', 'オタク': '御宅族',
+            '中文字幕': '中文字幕'}
 
 start_key = ''
 while start_key == '':
@@ -377,8 +380,8 @@ while start_key == '':
         subts_dict = {}          # 存放：jav的字幕文件
         for raw_file in files:
             # 判断文件是不是字幕文件
-            if raw_file.endswith(('.srt', '.vtt', '.ass',)):
-                srt_g = re.search(r'(\d?\d?[a-zA-Z]{1,7}\d?\d?)-? ?_?(\d{2,5})', raw_file)
+            if raw_file.endswith(('.srt', '.vtt', '.ass', '.ssa',)):
+                srt_g = re.search(r'(\d?\d?[a-zA-Z]{1,7}\d?\d?)-? ?_?(\d{2,6})', raw_file)
                 if str(srt_g) != 'None':
                     num_pref = srt_g.group(1).upper()
                     if num_pref in suren_list:
@@ -393,7 +396,7 @@ while start_key == '':
             # 判断是不是视频，得到车牌号
             if raw_file.endswith(type_tuple) and not raw_file.startswith('.'):
                 videos_num += 1
-                video_num_g = re.search(r'(\d?\d?[a-zA-Z]{1,7}\d?\d?)-? ?_?(\d{2,5})', raw_file)  # 这个正则表达式匹配“车牌号”可能有点奇怪，
+                video_num_g = re.search(r'(\d?\d?[a-zA-Z]{1,7}\d?\d?)-? ?_?(\d{2,6})', raw_file)  # 这个正则表达式匹配“车牌号”可能有点奇怪，
                 if str(video_num_g) != 'None':  # 如果你下过上千部片，各种参差不齐的命名，你就会理解我了。
                     num_pref = video_num_g.group(1).upper()
                     num_suf = video_num_g.group(2)
@@ -440,7 +443,7 @@ while start_key == '':
             relative_path = '\\' + root.lstrip(path) + '\\' + file  # 影片的相对于所选文件夹的路径，用于报错
             try:
                 # 获取nfo信息的javbus搜索网页  https://www.cdnbus.work/search/avop&type=&parent=ce
-                bus_bu_url = bus_url + 'search/' + car_num + '&type=&parent=ce'
+                bus_bu_url = bus_url + 'search/' + car_num + '&type=1&parent=ce'
                 jav_list[0] = bus_bu_url
                 try:
                     jav_html = get_jav_html(jav_list)
@@ -494,6 +497,7 @@ while start_key == '':
                     # 有码搜索的结果一个都匹配不上
                     if bav_url == '':
                         fail_times += 1
+                        print(jav_html)
                         fail_message = '第' + str(fail_times) + '个失败！多个搜索结果也找不到AV信息：' + bus_bu_url + '，' + relative_path + '\n'
                         print('>>' + fail_message, end='')
                         fail_list.append('    >' + fail_message)
@@ -521,6 +525,12 @@ while start_key == '':
                     if len(bav_urls) > 0:
                         print('>>跳过无码影片：', file)
                         continue
+                    # # 上面只能搜索
+                    # bus_bu_url = bus_url + 'search/' + car_num + '&type=1'
+                    # jav_list[0] = bus_bu_url
+                    # try:
+                    #     jav_html = get_jav_html(jav_list)
+                    # except:
                     fail_times += 1
                     fail_message = '第' + str(fail_times) + '个失败！有码无码都找不到AV信息：' + bus_bu_url + '，' + relative_path + '\n'
                     print('>>' + fail_message, end='')
@@ -654,10 +664,12 @@ while start_key == '':
                 if str(coverg) != 'None':
                     cover_url = coverg.group(1)
                 # 系列:</span> <a href="https://www.cdnbus.work/series/kpl">悪質シロウトナンパ</a>
-                sets = ''
-                setg = re.search(r'系列:</span> <a href=".+?">(.+?)</a>', bav_html)  # 封面图片的正则对象
-                if str(setg) != 'None':
-                    sets = setg.group(1)
+                seriesg = re.search(r'系列:</span> <a href=".+?">(.+?)</a>', bav_html)  # 封面图片的正则对象
+                if str(seriesg) != 'None':
+                    series = nfo_dict['系列'] = seriesg.group(1)
+                else:
+                    series = ''
+                    nfo_dict['系列'] = '未知系列'
                 # arzon的简介 #########################################################
                 plot = ''
                 if if_nfo == '是' and if_plot == '是':
@@ -721,7 +733,6 @@ while start_key == '':
                                                 .replace('"', '#').replace('<', '【').replace('>', '】')\
                                                 .replace('|', '#').replace('＜', '【').replace('＞', '】')\
                                                 .replace('〈', '【').replace('〉', '】').replace('＆', '和').replace('\t', '').replace('\r', '')
-                                            plot = '【影片简介】：' + plot
                                             break  # 跳出for AVs
                                 # 几个搜索结果查找完了，也没有找到简介
                                 if plot == '':
@@ -746,7 +757,7 @@ while start_key == '':
                                 else:  # 不是成人验证，也没有简介
                                     fail_times += 1
                                     fail_message = '    >第' + str(
-                                        fail_times) + '个失败！arzon找不到该影片简介，可能被下架：' + arz_search_url + '，' + relative_path + '\n'
+                                        fail_times) + '个失败！arzon找不到该影片，可能被下架：' + arz_search_url + '，' + relative_path + '\n'
                                     print(fail_message, end='')
                                     fail_list.append(fail_message)
                                     write_fail(fail_message)
@@ -771,7 +782,7 @@ while start_key == '':
                     # file发生了变化
                     file = new_mp4 + video_type
                     print('    >修改文件名' + cd_msg + '完成')
-                    if subt_name:
+                    if subt_name and if_rename_subt == '是':
                         os.rename(root + '\\' + subt_name, root + '\\' + new_mp4 + subt_type)
                         subt_name = new_mp4 + subt_type
                         print('    >修改字幕名完成')
@@ -823,8 +834,18 @@ while start_key == '':
                             del newroot_list[-1]
                             upper2_root = '\\'.join(newroot_list)
                             new_root = upper2_root + '\\' + new_folder  # 当前文件夹就会被重命名
-                            # 修改文件夹
-                            os.rename(root, new_root)
+                            if not os.path.exists(new_root) or new_root == root:              # 目标影片文件夹不存在，或者目标影片文件夹存在，但就是现在的文件夹，即新旧相同
+                                # 修改文件夹
+                                os.rename(root, new_root)
+                                print('    >重命名文件夹完成')
+                            else:                             # 已经有一个那样的文件夹了
+                                fail_times += 1
+                                fail_message = '    >第' + str(
+                                    fail_times) + '个失败！重命名文件夹失败，重复的影片，已存在相同文件夹：' + relative_path + file + '\n'
+                                print(fail_message, end='')
+                                fail_list.append(fail_message)
+                                write_fail(fail_message)
+                                continue
                     else:
                         if not os.path.exists(root + '\\' + new_folder):  # 已经存在目标文件夹
                             os.makedirs(root + '\\' + new_folder)
@@ -862,27 +883,29 @@ while start_key == '':
                             "  <studio>" + nfo_dict['片商'] + "</studio>\n"
                             "  <id>" + nfo_dict['车牌'] + "</id>\n"
                             "  <num>" + nfo_dict['车牌'] + "</num>\n"
-                            "  <set>" + sets + "</set>\n")
+                            "  <set>" + series + "</set>\n")
                     if simp_trad == '简':
                         for i in genres:
                             f.write("  <genre>" + gen_dict[i] + "</genre>\n")
-                        f.write("  <genre>片商：" + nfo_dict['片商'] + "</genre>\n")
-                        if sets:
-                            f.write("  <genre>系列：" + sets + "</genre>\n")
-                            f.write("  <tag>系列：" + sets + "</tag>\n")
+                        if series:
+                            f.write("  <genre>系列:" + series + "</genre>\n")
+                        f.write("  <genre>片商:" + nfo_dict['片商'] + "</genre>\n")
                         for i in genres:
                             f.write("  <tag>" + gen_dict[i] + "</tag>\n")
-                        f.write("  <tag>片商：" + nfo_dict['片商'] + "</tag>\n")
+                        if series:
+                            f.write("  <tag>系列:" + series + "</tag>\n")
+                        f.write("  <tag>片商:" + nfo_dict['片商'] + "</tag>\n")
                     else:
                         for i in genres:
                             f.write("  <genre>" + i + "</genre>\n")
-                        f.write("  <genre>片商：" + nfo_dict['片商'] + "</genre>\n")
-                        if sets:
-                            f.write("  <genre>系列：" + sets + "</genre>\n")
-                            f.write("  <tag>系列：" + sets + "</tag>\n")
+                        if series:
+                            f.write("  <genre>系列:" + series + "</genre>\n")
+                        f.write("  <genre>片商:" + nfo_dict['片商'] + "</genre>\n")
                         for i in genres:
                             f.write("  <tag>" + i + "</tag>\n")
-                        f.write("  <tag>片商：" + nfo_dict['片商'] + "</tag>\n")
+                        if series:
+                            f.write("  <tag>系列:" + series + "</tag>\n")
+                        f.write("  <tag>片商:" + nfo_dict['片商'] + "</tag>\n")
                     for i in actors:
                         f.write("  <actor>\n    <name>" + i + "</name>\n    <type>Actor</type>\n  </actor>\n")
                     f.write("</movie>\n")
