@@ -120,6 +120,8 @@ try:
     rename_mp4 = config_settings.get("重命名影片", "重命名影片的格式")
     if_folder = config_settings.get("修改文件夹", "是否重命名或创建独立文件夹？")
     rename_folder = config_settings.get("修改文件夹", "新文件夹的格式")
+    if_rename_subt = config_settings.get("字幕文件", "是否重命名已有的字幕文件")
+    if_classify_subt = config_settings.get("字幕文件", "是否使用字幕库")
     if_classify = config_settings.get("归类影片", "是否归类影片？")
     file_folder = config_settings.get("归类影片", "针对文件还是文件夹？")
     classify_root = config_settings.get("归类影片", "归类的根目录")
@@ -170,7 +172,7 @@ nfo_dict = {'空格': ' ', '车牌': 'ABC-123', '标题': '未知标题', '完�
             '发行年月日': '1970-01-01', '发行年份': '1970', '月': '01', '日': '01',
             '片商': '未知片商', '评分': '0', '首个女优': '未知演员', '全部女优': '未知演员',
             '片长': '0', '\\': '\\', '是否中字': custom_subt, '视频': 'ABC-123', '车牌前缀': 'ABC',
-            '是否xx': custom_xx, '影片类型': movie_type}  # 用于暂时存放影片信息，女优，标题等
+            '是否xx': custom_xx, '影片类型': movie_type, '系列': '未知系列'}  # 用于暂时存放影片信息，女优，标题等
 suren_list = suren_pref.split('、')
 rename_mp4_list = rename_mp4.split('+')
 rename_folder_list = rename_folder.split('+')
@@ -247,8 +249,8 @@ while start_key == '':
         subts_dict = {}          # 存放：jav的字幕文件{'路径': '文件中的车牌'}
         for raw_file in files:
             # 判断文件是不是字幕文件
-            if raw_file.endswith(('.srt', '.vtt', '.ass',)):
-                srt_g = re.search(r'([a-zA-Z]{2,7})-? ?_?(\d{2,5})', raw_file)  # 这个正则表达式匹配“车牌号”可能有点奇怪，
+            if raw_file.endswith(('.srt', '.vtt', '.ass', '.ssa',)):
+                srt_g = re.search(r'([a-zA-Z]{2,7})-? ?_?(\d{2,6})', raw_file)  # 这个正则表达式匹配“车牌号”可能有点奇怪，
                 if str(srt_g) != 'None':  # 如果你下过上千部片，各种参差不齐的命名，你就会理解我了。
                     num_pref = srt_g.group(1).upper()
                     if num_pref in suren_list:
@@ -261,7 +263,7 @@ while start_key == '':
         for raw_file in files:
             # 判断是不是视频，得到车牌号
             if raw_file.endswith(type_tuple) and not raw_file.startswith('.'):
-                video_num_g = re.search(r'([a-zA-Z]{2,7})-? ?_?(\d{2,5})', raw_file)
+                video_num_g = re.search(r'([a-zA-Z]{2,7})-? ?_?(\d{2,6})', raw_file)
                 if str(video_num_g) != 'None':
                     num_pref = video_num_g.group(1)
                     num_pref = num_pref.upper()
@@ -491,7 +493,7 @@ while start_key == '':
                     file = new_mp4 + video_type
                     print('    >修改文件名' + cd_msg + '完成')
                     # 重命名字幕
-                    if subt_name:
+                    if subt_name and if_rename_subt == '是':
                         os.rename(root + '\\' + subt_name, root + '\\' + new_mp4 + subt_type)
                         subt_name = new_mp4 + subt_type
                         print('    >修改字幕名完成')
@@ -543,9 +545,19 @@ while start_key == '':
                             del newroot_list[-1]
                             upper2_root = '\\'.join(newroot_list)
                             new_root = upper2_root + '\\' + new_folder  # 当前文件夹就会被重命名
-                            # 修改文件夹
-                            os.rename(root, new_root)
-                            print('    >重命名文件夹完成')
+                            if not os.path.exists(
+                                    new_root) or new_root == root:  # 目标影片文件夹不存在，或者目标影片文件夹存在，但就是现在的文件夹，即新旧相同
+                                # 修改文件夹
+                                os.rename(root, new_root)
+                                print('    >重命名文件夹完成')
+                            else:  # 已经有一个那样的文件夹了
+                                fail_times += 1
+                                fail_message = '    >第' + str(
+                                    fail_times) + '个失败！重命名文件夹失败，重复的影片，已存在相同文件夹：' + relative_path + file + '\n'
+                                print(fail_message, end='')
+                                fail_list.append(fail_message)
+                                write_fail(fail_message)
+                                continue
                     else:
                         if not os.path.exists(root + '\\' + new_folder):  # 已经存在目标文件夹
                             os.makedirs(root + '\\' + new_folder)
@@ -588,10 +600,10 @@ while start_key == '':
                             "  <num>" + nfo_dict['车牌'] + "</num>\n")
                     for i in genres:
                         f.write("  <genre>" + i + "</genre>\n")
-                    f.write("  <genre>片商：" + nfo_dict['片商'] + "</genre>\n")
+                    f.write("  <genre>片商:" + nfo_dict['片商'] + "</genre>\n")
                     for i in genres:
                         f.write("  <tag>" + i + "</tag>\n")
-                    f.write("  <tag>片商：" + nfo_dict['片商'] + "</tag>\n")
+                    f.write("  <tag>片商:" + nfo_dict['片商'] + "</tag>\n")
                     f.write("  <actor>\n    <name>" + nfo_dict['首个女优'] + "</name>\n    <type>Actor</type>\n  </actor>\n")
                     f.write("</movie>\n")
                     f.close()
