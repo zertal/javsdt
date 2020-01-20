@@ -141,6 +141,8 @@ try:
     rename_mp4 = config_settings.get("重命名影片", "重命名影片的格式")
     if_folder = config_settings.get("修改文件夹", "是否重命名或创建独立文件夹？")
     rename_folder = config_settings.get("修改文件夹", "新文件夹的格式")
+    if_rename_subt = config_settings.get("字幕文件", "是否重命名已有的字幕文件")
+    if_classify_subt = config_settings.get("字幕文件", "是否使用字幕库")
     file_folder = config_settings.get("归类影片", "针对文件还是文件夹？")
     if_classify = config_settings.get("归类影片", "是否归类影片？")
     classify_root = config_settings.get("归类影片", "归类的根目录")
@@ -233,7 +235,7 @@ nfo_dict = {'空格': ' ', '车牌': 'ABC-123', '标题': '未知标题', '完�
             '发行年月日': '1970-01-01', '发行年份': '1970', '月': '01', '日': '01',
             '片商': '未知片商', '评分': '0', '首个女优': '未知演员', '全部女优': '未知演员',
             '片长': '0', '\\': '\\', '是否中字': '', '视频': 'ABC-123', '车牌前缀': 'ABC',
-            '是否xx': '', '影片类型': movie_type}         # 存放影片信息，女优，标题等
+            '是否xx': '', '影片类型': movie_type, '系列': '未知系列'}         # 存放影片信息，女优，标题等
 suren_list = suren_pref.split('、')               # 素人番号的列表
 rename_mp4_list = rename_mp4.split('+')           # 重命名视频的格式
 rename_folder_list = rename_folder.split('+')     # 重命名文件夹的格式
@@ -300,6 +302,7 @@ while start_key == '':
             # print('>>该文件夹在归类的根目录中，跳过处理...', root)
             continue
         if if_exnfo == '是' and files and (files[-1].endswith('nfo') or (len(files) > 1 and files[-2].endswith('nfo'))):
+            print(root+'\\'+files[-1])
             continue
         # 对这一层文件夹进行评估,有多少视频，有多少同车牌视频，是不是独立文件夹
         jav_videos = []        # 存放：需要整理的jav的结构体
@@ -309,8 +312,8 @@ while start_key == '':
         subts_dict = {}        # 存放：jav的字幕文件 {'c:\\a\\abc_123.srt': 'abc-123'}
         for raw_file in files:
             # 判断文件是不是字幕文件
-            if raw_file.endswith(('.srt', '.vtt', '.ass',)):
-                srt_g = re.search(r'([a-zA-Z]{2,7})-? ?_?(\d{2,5})', raw_file)
+            if raw_file.endswith(('.srt', '.vtt', '.ass', '.ssa',)):
+                srt_g = re.search(r'([a-zA-Z]{2,7})-? ?_?(\d{2,6})', raw_file)
                 if str(srt_g) != 'None':
                     num_pref = srt_g.group(1).upper()
                     if num_pref in suren_list:
@@ -325,7 +328,7 @@ while start_key == '':
             # 判断是不是视频，得到车牌号
             if raw_file.endswith(type_tuple) and not raw_file.startswith('.'):
                 videos_num += 1
-                video_num_g = re.search(r'([a-zA-Z]{2,7})-? ?_?(\d{2,5})', raw_file)    # 这个正则表达式匹配“车牌号”可能有点奇怪，
+                video_num_g = re.search(r'([a-zA-Z]{2,7})-? ?_?(\d{2,6})', raw_file)    # 这个正则表达式匹配“车牌号”可能有点奇怪，
                 if str(video_num_g) != 'None':                               # 如果你下过上千部片，各种参差不齐的命名，你就会理解我了。
                     num_pref = video_num_g.group(1).upper()
                     num_suf = video_num_g.group(2)
@@ -390,23 +393,27 @@ while start_key == '':
                         continue
                 # 搜索结果的网页，大部分情况就是这个影片的网页，也有可能是多个结果的网页
                 # 尝试找标题，第一种情况：找得到，就是这个影片的网页
-                titleg = re.search(r'<title>([a-zA-Z]{1,6}-\d{1,5}.+?) - JAVLibrary</title>', jav_html)  # 匹配处理“标题”
+                titleg = re.search(r'<title>([A-Z].+?) - JAVLibrary</title>', jav_html)  # 匹配处理“标题”
                 # 搜索结果就是AV的页面
                 if str(titleg) != 'None':
                     title = titleg.group(1)
                 # 第二种情况：搜索结果可能是两个以上，所以这种匹配找不到标题，None！
                 else:   # 继续找标题，但匹配形式不同，这是找“可能是多个结果的网页”上的第一个标题
-                    search_results = re.findall(r'v=javli(.+?)" title=".+?-\d+?[a-z]? ', jav_html)
+                    search_results = re.findall(r'v=javli(.+?)" title="(.+?-\d+?[a-z]? .+?)"', jav_html)
+                    # os.system('pause')
                     # 搜索有几个结果，用第一个AV的网页，打开它
                     if search_results:
-                        if len(search_results) > 1:
-                            fail_times += 1
-                            fail_message = '第' + str(fail_times) + '个警告！搜索页面上的有多个结果：' + lib_search_url + '\n'
-                            print('>>' + fail_message, end='')
-                            fail_list.append('    >' + fail_message)
-                            write_fail('    >' + fail_message)
-                        # 只有一个结果，其实其他的被忽略的，比如avop-00127bod
-                        result_first_url = library_url + '?v=javli' + search_results[0]
+                        result_first_url = library_url + '?v=javli' + search_results[0][0]
+                        if len(search_results) > 1:   # 只有一个结果，其实有的结果被忽略了，比如avop-00127bod，它是近几年重置的，信息冗余
+                            if search_results[0][1].endswith('ク）'):   # 排在第一个的是蓝光重置版，比如SSNI-589（ブルーレイディスク），它的封面不正常，跳过它
+                                result_first_url = library_url + '?v=javli' + search_results[1][0]
+                            elif search_results[1][1].startswith(car_num):  # 不同的片，但车牌完全相同，比如id-020。警告用户，但默认用第一个结果。
+                                fail_times += 1
+                                fail_message = '第' + str(fail_times) + '个警告！搜索页面上的有多个结果：' + lib_search_url + '\n'
+                                print('>>' + fail_message, end='')
+                                fail_list.append('    >' + fail_message)
+                                write_fail('    >' + fail_message)
+                            # else: 还有一种情况，不同片，车牌也不同，但搜索到一堆，比如搜“AVOP-039”，还会得到“AVOP-390”，正确的肯定是第一个。
                         jav_list[0] = result_first_url
                         try:
                             jav_html = get_jav_html(jav_list)
@@ -418,7 +425,7 @@ while start_key == '':
                             write_fail('    >' + fail_message)
                             continue
                         # 找到标题，留着马上整理信息用
-                        title = re.search(r'<title>([a-zA-Z]{1,6}-\d{1,5}.+?) - JAVLibrary</title>', jav_html).group(1)
+                        title = re.search(r'<title>([A-Z].+?) - JAVLibrary</title>', jav_html).group(1)
                     # 第三种情况：搜索不到这部影片，搜索结果页面什么都没有
                     else:
                         fail_times += 1
@@ -429,7 +436,7 @@ while start_key == '':
                         continue
 
                 print('>>正在处理：', title)
-                # 影片本身的一些属性
+                # 影片文件本身的一些属性
                 video_type = '.' + file.split('.')[-1]         # 文件类型，如：.mp4
                 subt_name = srt.subt
                 if subt_name:
@@ -559,7 +566,7 @@ while start_key == '':
                             .replace('|', '#').replace('＜', '【').replace('＞', '】') \
                             .replace('〈', '【').replace('〉', '】').replace('＆', '和').replace('\t', '').replace('\r', '')
                 # arzon的简介 #########################################################
-                plot = ''
+                plot = series = ''
                 if if_nfo == '是' and if_plot == '是':
                     while 1:
                         arz_search_url = 'https://www.arzon.jp/itemlist.html?t=&m=all&s=&q=' + nfo_dict['车牌']
@@ -621,7 +628,12 @@ while start_key == '':
                                                 .replace('"', '#').replace('<', '【').replace('>', '】')\
                                                 .replace('|', '#').replace('＜', '【').replace('＞', '】')\
                                                 .replace('〈', '【').replace('〉', '】').replace('＆', '和').replace('\t', '').replace('\r', '')
-                                            plot = '【影片简介】：' + plot
+                                            # 系列<a href="/itemlist.html?mkr=10149&series=43">麗しのノーブラ先生</a>
+                                            seriesg = re.search(r'series=\d+">(.+?)</a>', jav_html)
+                                            if str(seriesg) != 'None':
+                                                series = nfo_dict['系列'] = seriesg.group(1)
+                                            else:
+                                                nfo_dict['系列'] = '未知系列'
                                             break  # 跳出for AVs
                                 # 几个搜索结果查找完了，也没有找到简介
                                 if plot == '':
@@ -673,7 +685,7 @@ while start_key == '':
                     file = new_mp4 + video_type
                     print('    >修改文件名' + cd_msg + '完成')
                     # 重命名字幕
-                    if subt_name:
+                    if subt_name and if_rename_subt == '是':
                         os.rename(root + '\\' + subt_name, root + '\\' + new_mp4 + subt_type)
                         subt_name = new_mp4 + subt_type
                         print('    >修改字幕名完成')
@@ -725,10 +737,10 @@ while start_key == '':
                             del newroot_list[-1]
                             upper2_root = '\\'.join(newroot_list)         # 当前文件夹的上级目录
                             new_root = upper2_root + '\\' + new_folder    # 上级目录+新目录名称=新目录路径
-                            if not os.path.exists(new_root):              # 目标影片文件夹不存在，
+                            if not os.path.exists(new_root) or new_root == root:              # 目标影片文件夹不存在，或者目标影片文件夹存在，但就是现在的文件夹，即新旧相同
+                                # 修改文件夹
                                 os.rename(root, new_root)
-                            elif new_root == root:            # 目标影片文件夹存在，但就是现在的文件夹，即新旧相同
-                                os.rename(root, new_root)
+                                print('    >重命名文件夹完成')
                             else:                             # 已经有一个那样的文件夹了
                                 fail_times += 1
                                 fail_message = '    >第' + str(
@@ -777,13 +789,18 @@ while start_key == '':
                             "  <country>日本</country>\n"
                             "  <studio>" + nfo_dict['片商'] + "</studio>\n"
                             "  <id>" + nfo_dict['车牌'] + "</id>\n"
-                            "  <num>" + nfo_dict['车牌'] + "</num>\n")
+                            "  <num>" + nfo_dict['车牌'] + "</num>\n"
+                            "  <set>" + series + "</set>\n")
                     for i in genres:
                         f.write("  <genre>" + i + "</genre>\n")
-                    f.write("  <genre>片商：" + nfo_dict['片商'] + "</genre>\n")
+                    if series:
+                        f.write("  <genre>系列:" + series + "</genre>\n")
+                    f.write("  <genre>片商:" + nfo_dict['片商'] + "</genre>\n")
                     for i in genres:
                         f.write("  <tag>" + i + "</tag>\n")
-                    f.write("  <tag>片商：" + nfo_dict['片商'] + "</tag>\n")
+                    if series:
+                        f.write("  <tag>系列:" + series + "</tag>\n")
+                    f.write("  <tag>片商:" + nfo_dict['片商'] + "</tag>\n")
                     for i in actors:
                         f.write("  <actor>\n    <name>" + i + "</name>\n    <type>Actor</type>\n  </actor>\n")
                     f.write("</movie>\n")
@@ -826,7 +843,7 @@ while start_key == '':
                             write_fail(fail_message)
                             continue
                         # DVD封面cover
-                        coverg = re.search(r'<a class="bigImage" href="(.+?)">', bav_html)  # 封面图片的正则对象
+                        coverg = re.search(r'<a class="bigImage" href="(.+?)">', bav_html)
                         if str(coverg) != 'None':
                             cover_url = coverg.group(1)
                             cover_list[0] = 0
@@ -854,7 +871,7 @@ while start_key == '':
                     # 裁剪生成 poster
                     img = Image.open(fanart_path)
                     w, h = img.size                        # fanart的宽 高
-                    ex = int(w*0.52625)                    # 0.52625是根据emby的poster宽高比较出来的
+                    ex = int(w*0.52625)                    # 0.525是海报宽（800-379）/800原长
                     poster = img.crop((ex, 0, w, h))       # （ex，0）是左下角（x，y）坐标 （w, h)是右上角（x，y）坐标
                     poster.save(poster_path, quality=95)   # quality=95 是无损crop，如果不设置，默认75
                     print('    >poster.jpg裁剪成功')
