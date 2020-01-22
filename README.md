@@ -9,7 +9,7 @@ python3.7  使用pyinstaller打包成发行版exe。
   
 2、下载及群链接：  
     目前20-01-22更新1.0.3版本  
-    [前往下载exe](https://github.com/junerain123/javsdt/releases/tag/V1.0.3)或者[从蓝奏云下载](https://www.lanzous.com/i8tbhuf)  
+    [前往下载exe](https://github.com/junerain123/javsdt/releases/tag/V1.0.3)或者[从蓝奏云下载](https://www.lanzous.com/i8tkzjg)  
   
 [前往下载女优头像](https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases/tag/女优头像)   
   
