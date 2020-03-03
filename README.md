@@ -3,15 +3,15 @@
 python3.7  使用pyinstaller打包成发行版exe。  
 
 1、运行源代码：  
-    如果要运行py文件，PIL即pillow不要用新版，新版仅支持“png”，我是“pip install pillow==6.0.0”  
+    如果要运行代码，PIL即pillow不要用新版，新版仅支持“png”，我是“pip install pillow==6.0.0”  
     百度人体分析的“from aip import AipBodyAnalysis”，aip是“pip install baidu-aip”  
     几个jav的py都是独立执行的，加了很多很多注释，希望其他开发者能理解有一些莫名其妙的代码在干什么。  
   
 2、下载及群链接：  
-    目前20-03-03更新1.0.4版本  
-    [前往下载exe](https://github.com/junerain123/javsdt/releases/tag/V1.0.3)或者[从蓝奏云下载](https://www.lanzous.com/i9wur5i)  
+    目前20-03-03更新1.0.4版本  使用环境win7/win10 64位
+    [前往下载exe](https://github.com/junerain123/javsdt/releases/tag/V1.0.4)或者[从蓝奏云下载](https://www.lanzous.com/i9wur5i)  
   
-[前往下载女优头像](https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases/tag/女优头像)   
+[前往下载演员头像](https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases/tag/女优头像)   
   
 [电报群](https://t.me/javsdtool)  
 [企鹅群](https://jq.qq.com/?_wv=1027&k=5CbWOpV)  
