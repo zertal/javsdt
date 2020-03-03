@@ -4,7 +4,7 @@ python3.7  使用pyinstaller打包成发行版exe。
 
 1、运行源代码：  
     如果要运行代码，PIL即pillow不要用新版，新版仅支持“png”，我是“pip install pillow==6.0.0”  
-    百度人体分析的“from aip import AipBodyAnalysis”，aip是“pip install baidu-aip”  
+    bd人体分析的“from aip import AipBodyAnalysis”，aip是“pip install baidu-aip”  
     几个jav的py都是独立执行的，加了很多很多注释，希望其他开发者能理解有一些莫名其妙的代码在干什么。  
   
 2、下载及群链接：  
