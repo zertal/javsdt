@@ -391,7 +391,7 @@ while input_start_key == '':
                                 url_first_result = url_web + '?v=javli' + list_search_results[1][0]
                             elif list_search_results[1][1].split(' ', 1)[0] == jav_raw_num:  # 不同的片，但车牌完全相同，比如id-020。警告用户，但默认用第一个结果。
                                 num_fail += 1
-                                record_fail('    >第' + str(num_fail) + '个警告！从同车牌的搜索结果中确定为：' + url_search_web + '，' + path_relative + '\n')
+                                record_fail('    >第' + str(num_fail) + '个警告！从同车牌的搜索结果中确定为：' + url_first_result + '，' + path_relative + '\n')
                             # else: 还有一种情况，不同片，车牌也不同，但搜索到一堆，比如搜“AVOP-039”，还会得到“AVOP-390”，正确的肯定是第一个。
                         # 打开这个jav在library上的网页
                         print('    >获取信息：', url_first_result)
