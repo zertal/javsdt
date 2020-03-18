@@ -1,4 +1,5 @@
 # jav-standard-tool 简称javsdt
+# 作者为生活所迫，已经跑路...
 简介：收集jav元数据，并规范本地文件（夹）的格式，收集女优头像，为emby、kodi、jellyfin、极影派等影片管理软件铺路。  
 python3.7  使用pyinstaller打包成发行版exe。  
 
@@ -8,8 +9,8 @@ python3.7  使用pyinstaller打包成发行版exe。
     几个jav的py都是独立执行的，加了很多很多注释，希望其他开发者能理解有一些莫名其妙的代码在干什么。  
   
 2、下载及群链接：  
-    目前20-03-10更新1.0.5版本  使用环境win7/win10 64位  
-    [前往下载exe](https://github.com/junerain123/javsdt/releases/tag/V1.0.5)或者[从蓝奏云下载](https://www.lanzous.com/ia4hq4b)  
+    目前2020年3月18日更新的1.0.6版本  使用环境win7/win10 64位  
+    [前往下载exe](https://github.com/junerain123/javsdt/releases/tag/V1.0.6)或者[从蓝奏云下载](https://www.lanzous.com/iadu23i)  
   
 [前往下载演员头像](https://github.com/junerain123/JAV-Scraper-and-Rename-local-files/releases/tag/女优头像)   
   
