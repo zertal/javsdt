@@ -96,7 +96,7 @@ def get_library_html(url, header, proxy):
         elif search(r'javli', rqs_content):           # 搜索车牌后，javlibrary跳转前的网页
             url = url[:23] + search(r'(\?v=javli.+?)"', rqs_content).group(1)    # rqs_content是一个非常简短的跳转网页，内容是目标jav所在网址
             if len(url) > 70:                          # 跳转车牌特别长，cf已失效
-                header = steal_library_header(url[:23])  # 更新header后继续请求
+                header = steal_library_header(url[:23], proxy)  # 更新header后继续请求
                 continue
             print('    >获取信息：', url)
             continue                                  # 更新url后继续requests.get
