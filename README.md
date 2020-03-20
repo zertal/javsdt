@@ -19,6 +19,7 @@
    pip install baidu-aip  
    pip install pysocks  
    pip install cfscrape  
+   使用javlibrary.py，要通过cloudflare的检测，还需要安装[node.js](https://nodejs.org/zh-cn/)。  
     几个jav的py都是独立执行的，加了很多很多注释，希望能理解其中踩过的坑。  
   
 3、工作流程：  
