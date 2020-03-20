@@ -4,13 +4,13 @@
 
   
 1、下载及群链接：  
-    目前2020年3月18日更新的1.0.6版本  使用环境win7/win10 64位  
-    [前往下载exe](https://github.com/junerain123/javsdt/releases/tag/V1.0.6)或者[从蓝奏云下载](https://www.lanzous.com/iaed6ad)  
+目前2020年3月18日更新的1.0.6版本  使用环境win7/win10 64位  
+[前往下载exe](https://github.com/junerain123/javsdt/releases/tag/V1.0.6)或者[从蓝奏云下载](https://www.lanzous.com/iaed6ad)  
   
-    [前往下载演员头像](https://github.com/junerain123/javsdt/releases/tag/女优头像)   
+[前往下载演员头像](https://github.com/junerain123/javsdt/releases/tag/女优头像)   
   
-    [电报群](https://t.me/javsdtool)  
-    [企鹅群](https://jq.qq.com/?_wv=1027&k=5CbWOpV)（需要付费1人民币入群）  
+[电报群](https://t.me/javsdtool)  
+[企鹅群](https://jq.qq.com/?_wv=1027&k=5CbWOpV)（需要付费1人民币入群）  
   
 2、其他开发者：  
     python3.7 使用pyinstaller打包成发行版exe  
