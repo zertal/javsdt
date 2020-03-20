@@ -14,11 +14,11 @@
   
 2、其他开发者：  
     python3.7 使用pyinstaller打包成发行版exe  
-    pip install requests  
-    pip install Pillow  
-    pip install baidu-aip  
-    pip install pysocks  
-    pip install cfscrape  
+   pip install requests  
+   pip install Pillow  
+   pip install baidu-aip  
+   pip install pysocks  
+   pip install cfscrape  
     几个jav的py都是独立执行的，加了很多很多注释，希望能理解其中踩过的坑。  
   
 3、工作流程：  
