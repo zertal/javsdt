@@ -1,4 +1,8 @@
-# -*- coding:utf-8 -*-
+
+pre_versions
+/
+1.0.6
+/# -*- coding:utf-8 -*-
 import os
 from configparser import RawConfigParser
 from shutil import copyfile
