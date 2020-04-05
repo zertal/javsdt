@@ -12,15 +12,16 @@
 [电报群](https://t.me/javsdtool)  
 [企鹅群](https://jq.qq.com/?_wv=1027&k=5CbWOpV)（需要付费1人民币扩群）  
   
-## 2、[使用说明](https://github.com/junerain123/javsdt/wiki)  
+## 2、[使用说明(还没写完)](https://github.com/junerain123/javsdt/wiki)  
+[旧版的使用说明从蓝奏云下载](https://www.lanzous.com/ib0qozg)  
 
 ## 3、【其他开发者】运行环境：  
-    python3.7 发行版是pyinstaller打包的exe  
-   pip install requests  
-   pip install Pillow  
-   pip install baidu-aip  
-   pip install pysocks  
-   pip install cfscrape  
+  python3.7.6 发行版是pyinstaller打包的exe  
+    pip install requests  
+    pip install Pillow  
+    pip install baidu-aip  
+    pip install pysocks  
+    pip install cfscrape  
    使用javlibrary.py，要通过cloudflare的检测，还需要安装[node.js](https://nodejs.org/zh-cn/)。  
     几个jav的py都是独立执行的，加了很多很多注释，希望能理解其中踩过的坑。  
   
