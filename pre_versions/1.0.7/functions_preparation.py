@@ -1,4 +1,8 @@
-# -*- coding:utf-8 -*-
+/
+pre_versions
+/
+1.0.7
+/# -*- coding:utf-8 -*-
 from os import sep, system
 from os.path import exists
 from re import search
