@@ -5,7 +5,7 @@
   
 ## 1、【一般用户】下载及群链接：  
 目前2020年4月5日更新的1.0.8版本  使用环境win7/win10 64位  
-[从蓝奏云下载](https://www.lanzous.com/ib0s39g) 或者 [从github下载](https://github.com/junerain123/javsdt/releases/tag/V1.0.8)
+[从蓝奏云下载](https://www.lanzous.com/ib0vfhe) 或者 [从github下载](https://github.com/junerain123/javsdt/releases/tag/V1.0.8)
   
 [前往下载演员头像](https://github.com/junerain123/javsdt/releases/tag/女优头像)   
   
