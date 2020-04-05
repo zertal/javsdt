@@ -4,8 +4,8 @@
 
   
 ## 1、【一般用户】下载及群链接：  
-目前2020年3月27日更新的1.0.7版本  使用环境win7/win10 64位  
-[从蓝奏云下载](https://www.lanzous.com/iapi0dg) 或者 [从github下载](https://github.com/junerain123/javsdt/releases/tag/V1.0.7)
+目前2020年4月5日更新的1.0.8版本  使用环境win7/win10 64位  
+[从蓝奏云下载](https://www.lanzous.com/ib0s39g) 或者 [从github下载](https://github.com/junerain123/javsdt/releases/tag/V1.0.8)
   
 [前往下载演员头像](https://github.com/junerain123/javsdt/releases/tag/女优头像)   
   
@@ -34,15 +34,15 @@
     （7）下载封面url作fanart.jpg，裁剪右半边作poster.jpg。   
     （8）移动文件夹，完成归类。  
   
-## 4、目标效果：  
+## 5、目标效果：  
 ![image](https://github.com/junerain123/Collect-Info-and-Fanart-for-JAV-/blob/master/images/1_files_origin.png)  
 ![image](https://github.com/junerain123/Collect-Info-and-Fanart-for-JAV-/blob/master/images/2.png)  
 ![image](https://github.com/junerain123/Collect-Info-and-Fanart-for-JAV-/blob/master/images/3.jpg)  
   
-## 5、ini中的用户设置：  
+## 6、ini中的用户设置：  
 ![image](https://github.com/junerain123/Collect-Info-and-Fanart-for-JAV-/blob/master/images/4.PNG)  
   
-## 6、其他说明：  
+## 7、其他说明：  
 （1）不需要赞助；  
 （2）允许对软件进行任何形式的转载；  
 （3）代码及软件使用“MIT许可证”，他人可以修改代码、发布分支，允许闭源、商业化，但造成后果与本作者无关。  
