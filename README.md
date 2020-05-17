@@ -35,12 +35,12 @@
     （8）移动文件夹，完成归类。  
   
 ## 5、目标效果：  
-![image](https://github.com/junerain123/javsdt/blob/master/images/1_files_origin.png)  
-![image](https://github.com/junerain123/javsdt/blob/master/images/2.png)  
-![image](https://github.com/junerain123/javsdt/blob/master/images/3.jpg)  
+![image](https://github.com/junerain123/Junerain_Images/blob/master/jav/javsdt/readme/%E7%9B%AE%E6%A0%87%E6%95%88%E6%9E%9C1.png?raw=false)  
+![image](https://github.com/junerain123/Junerain_Images/blob/master/jav/javsdt/readme/%E7%9B%AE%E6%A0%87%E6%95%88%E6%9E%9C2.png?raw=false)  
+![image](https://github.com/junerain123/Junerain_Images/blob/master/jav/javsdt/readme/%E7%9B%AE%E6%A0%87%E6%95%88%E6%9E%9C3.png?raw=false)  
   
 ## 6、ini中的用户设置：  
-![image](https://github.com/junerain123/Collect-Info-and-Fanart-for-JAV-/blob/master/images/4.PNG)  
+![image](https://github.com/junerain123/Junerain_Images/blob/master/jav/javsdt/readme/ini%E8%AE%BE%E7%BD%AE.PNG?raw=false)  
   
 ## 7、其他说明：  
 （1）不需要赞助；  
