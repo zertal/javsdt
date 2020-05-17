@@ -21,7 +21,7 @@
     pip install Pillow  
     pip install baidu-aip  
     pip install pysocks  
-    pip install cloudscraper  
+    pip install [cloudscraper](https://github.com/VeNoMouS/cloudscraper)  
    几个jav的py都是独立执行的，加了很多很多注释，希望能理解其中踩过的坑。  
    
 ## 4、工作流程：  
