@@ -4,8 +4,8 @@
 
   
 ## 1、【一般用户】下载及群链接：  
-目前2020年4月23日更新的1.0.9版本  使用环境win10 64位  
-[从蓝奏云下载](https://www.lanzous.com/ibzw3gh) 或者 [从github下载](https://github.com/junerain123/javsdt/releases/tag/V1.0.9)
+目前2020年5月17日更新的1.1.0版本  使用环境win10 64位  
+[从蓝奏云下载](https://junerain.lanzous.com/icq4i4j) 或者 [从github下载](https://github.com/junerain123/javsdt/releases/tag/V1.1.0)
   
 [前往下载演员头像](https://github.com/junerain123/javsdt/releases/tag/女优头像)   
   
@@ -21,10 +21,8 @@
     pip install Pillow  
     pip install baidu-aip  
     pip install pysocks  
-    pip install cfscrape  
+    pip install cloudscraper  
    几个jav的py都是独立执行的，加了很多很多注释，希望能理解其中踩过的坑。  
-   使用javlibrary.py，要通过cloudflare的检测，目前是借助于[cfscrape](https://github.com/Anorov/cloudflare-scrape#dependencies) ，还需要安装[node.js](https://nodejs.org/zh-cn/)。1.0.8到1.0.9版本，参考[cfscrape的issue](https://github.com/Anorov/cloudflare-scrape/issues/350) ，改动了cfscrape中“__init__.py”的第253行，加了“.?”这两个字，见下图：  
-![image](https://github.com/junerain123/javsdt/blob/master/images/cfscrape.jpg)  
    
 ## 4、工作流程：  
     （1）用户选择文件夹，遍历路径下的所有文件。  
