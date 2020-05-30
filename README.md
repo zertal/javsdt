@@ -5,14 +5,14 @@
   
 ## 1、【一般用户】下载及群链接：  
 目前2020年5月17日更新的1.1.0版本  使用环境win10 64位  
-[从蓝奏云下载](https://junerain.lanzous.com/icq4i4j) 或者 [从github下载](https://github.com/junerain123/javsdt/releases/tag/V1.1.0)
+[从蓝奏云下载](https://junerain.lanzous.com/icq4i4j) 或者 [从github下载](https://github.com/javsdt/javsdt/releases/tag/V1.1.0)
   
-[前往下载演员头像](https://github.com/junerain123/javsdt/releases/tag/女优头像)   
+[前往下载演员头像](https://github.com/javsdt/javsdt/releases/tag/女优头像)   
   
 [电报群](https://t.me/joinchat/PaHhgBaleu_qEgFy_NJlIA)  
 [企鹅群](https://jq.qq.com/?_wv=1027&k=5CbWOpV)（需要付费1人民币扩群）  
   
-## 2、[使用说明(还没写完)](https://github.com/junerain123/javsdt/wiki)  
+## 2、[使用说明(还没写完)](https://github.com/javsdt/javsdt/wiki)  
 [旧版的使用说明从蓝奏云下载](https://www.lanzous.com/ib0qozg)  
 
 ## 3、【其他开发者】运行环境：  
@@ -35,12 +35,12 @@
     （8）移动文件夹，完成归类。  
   
 ## 5、目标效果：  
-![image](https://github.com/junerain123/Junerain_Images/blob/master/jav/javsdt/readme/%E7%9B%AE%E6%A0%87%E6%95%88%E6%9E%9C1.png?raw=false)  
-![image](https://github.com/junerain123/Junerain_Images/blob/master/jav/javsdt/readme/%E7%9B%AE%E6%A0%87%E6%95%88%E6%9E%9C2.png?raw=false)  
-![image](https://github.com/junerain123/Junerain_Images/blob/master/jav/javsdt/readme/%E7%9B%AE%E6%A0%87%E6%95%88%E6%9E%9C3.jpg?raw=false)  
+![image](https://github.com/javsdt/images/blob/master/jav/javsdt/readme/%E7%9B%AE%E6%A0%87%E6%95%88%E6%9E%9C1.png?raw=false)  
+![image](https://github.com/javsdt/images/blob/master/jav/javsdt/readme/%E7%9B%AE%E6%A0%87%E6%95%88%E6%9E%9C2.png?raw=false)  
+![image](https://github.com/javsdt/images/blob/master/jav/javsdt/readme/%E7%9B%AE%E6%A0%87%E6%95%88%E6%9E%9C3.jpg?raw=false)  
   
 ## 6、ini中的用户设置：  
-![image](https://github.com/junerain123/Junerain_Images/blob/master/jav/javsdt/readme/ini%E8%AE%BE%E7%BD%AE.PNG?raw=false)  
+![image](https://github.com/javsdt/images/blob/master/jav/javsdt/readme/ini%E8%AE%BE%E7%BD%AE.PNG?raw=false)  
   
 ## 7、其他说明：  
 （1）不需要赞助；  
